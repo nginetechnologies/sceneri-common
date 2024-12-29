@@ -1,0 +1,94 @@
+Checks: "*,
+        -abseil-*,
+        -altera-*,
+        +altera-struct-pack-align,
+        -android-*,
+        -fuchsia-*,
+        -google-*,
+        -zircon-*,
+        -cppcoreguidelines-non-private-member-variables-in-classes,
+        -cppcoreguidelines-pro-type-reinterpret-cast,
+        -cppcoreguidelines-pro-type-static-cast-downcast,
+        -cppcoreguidelines-pro-type-union-access,
+        -hicpp-signed-bitwise,
+        -llvm-namespace-comment,
+        -llvmlibc-callee-namespace,
+        -llvmlibc-implementation-in-namespace,
+        -misc-non-private-member-variables-in-classes,
+        -modernize-use-trailing-return-type,
+        -readability-magic-numbers,
+        -readability-uppercase-literal-suffix
+        -misc-include-cleaner
+        # We don't support exception, so ignore related warnings
+        -cert-err58-cpp
+        -cppcoreguidelines-rvalue-reference-param-not-moved
+        -hicpp-explicit-conversions
+        -hicpp-special-member-functions
+        -cppcoreguidelines-special-member-functions
+        -cppcoreguidelines-explicit-virtual-functions
+        -cppcoreguidelines-avoid-const-or-ref-data-members
+        -hicpp-use-override
+        -hicpp-named-parameter
+        -hicpp-uppercase-literal-suffix
+        -readability-named-parameter
+        -modernize-use-override
+        -llvmlibc-restrict-system-libc-headers
+        -hicpp-deprecated-headers
+        -performance-unnecessary-value-param
+        -hicpp-use-auto
+        -modernize-use-auto
+        -cppcoreguidelines-avoid-c-arrays
+        -cppcoreguidelines-pro-bounds-array-to-pointer-decay
+        -cppcoreguidelines-pro-type-vararg
+        -cppcoreguidelines-pro-bounds-pointer-arithmetic
+        -llvm-else-after-return
+        -misc-no-recursion
+        -modernize-return-braced-init-list
+        -readability-else-after-return
+        -misc-use-anonymous-namespace
+        -bugprone-easily-swappable-parameters
+        -hicpp-multiway-paths-covered
+        -cppcoreguidelines-avoid-non-const-global-variables
+        -readability-implicit-bool-conversion
+        -readability-simplify-boolean-expr,
+        -cppcoreguidelines-avoid-magic-numbers
+        -cppcoreguidelines-pro-type-member-init
+        -modernize-use-nodiscard
+        -cppcoreguidelines-missing-std-forward
+        -cppcoreguidelines-pro-bounds-constant-array-index
+        -hicpp-avoid-c-arrays
+        -clang-diagnostic-pre-c++17-compat
+        -clang-diagnostic-pre-c++14-compat
+        -clang-diagnostic-c++98-compat
+        -portability-simd-intrinsics
+        -clang-diagnostic-unused-command-line-argument
+"
+WarningsAsErrors: ''
+HeaderFilterRegex: ''
+FormatStyle:     none
+
+CheckOptions:
+  - key: bugprone-easily-swappable-parameters.QualifiersMix
+    value: '1'
+  - key: bugprone-easily-swappable-parameters.ModelImplicitConversions
+    value: '1'
+
+  - key: readability-function-cognitive-complexity.Threshold
+    value: '50'
+
+  - key: readability-identifier-naming.ClassCase
+    value: 'CamelCase'
+  - key: readability-identifier-naming.ConstexprVariableCase
+    value: 'CamelCase'
+  - key: readability-identifier-naming.FunctionCase
+    value: 'CamelCase'
+  - key: readability-identifier-naming.MemberCase
+    value: 'camelBack'
+  - key: readability-identifier-naming.PrivateMemberPrefix
+    value: 'm_'
+  - key: readability-identifier-naming.ProtectedMemberPrefix
+    value: 'm_'
+  - key: readability-identifier-naming.VariableCase
+    value: 'camelBack'
+  - key: readability-function-cognitive-complexity.IgnoreMacros
+    value: true

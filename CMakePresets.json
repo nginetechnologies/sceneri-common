@@ -1,0 +1,511 @@
+{
+	"version": 3,
+	"cmakeMinimumRequired": {
+		"major": 3,
+		"minor": 21,
+		"patch": 0
+	},
+	"configurePresets": [
+		{
+			"name": "base",
+			"hidden": true,
+			"binaryDir": "${sourceDir}/build-${presetName}",
+			"cacheVariables": {
+				"ENGINE_CODE_DIRECTORY": "${sourceDir}"
+			}
+		},
+		{
+			"name": "ninja-base",
+			"hidden": true,
+			"generator": "Ninja Multi-Config",
+			"cacheVariables": {
+				"CMAKE_EXPORT_COMPILE_COMMANDS": "1"
+			}
+		},
+
+		{
+			"name": "linux-base",
+			"inherits": "base",
+			"hidden": true,
+			"condition": {
+				"type": "equals",
+				"lhs": "${hostSystemName}",
+				"rhs": "Linux"
+			},
+			"cacheVariables": {
+				"BINARY_OUTPUT_DIRECTORY": "${sourceParentDir}/bin/Linux"
+			}
+		},
+		{
+			"name": "linux-ninja-base",
+			"inherits": [
+				"linux-base",
+				"ninja-base"
+			],
+			"hidden": true,
+			"cacheVariables": {
+				"CMAKE_MAKE_PROGRAM": "${sourceParentDir}/tools/ninja/Linux/ninja"
+			}
+		},
+		{
+			"name": "linux-clang-ninja",
+			"inherits": [
+				"base",
+				"linux-ninja-base"
+			],
+			"displayName": "Linux Ninja (Clang)",
+			"description": "Compiles the full engine for Linux with Emscripten, Ninja and Clang",
+			"cacheVariables": {
+				"CMAKE_C_COMPILER": "/usr/bin/clang",
+				"CMAKE_CXX_COMPILER": "/usr/bin/clang++"
+			}
+		},
+		{
+			"name": "linux-gcc-ninja",
+			"inherits": [
+				"base",
+				"linux-ninja-base"
+			],
+			"displayName": "Linux Ninja (GCC)",
+			"description": "Compiles the full engine for Linux with Emscripten, Ninja and GCC",
+			"cacheVariables": {
+				"CMAKE_C_COMPILER": "/usr/bin/gcc",
+				"CMAKE_CXX_COMPILER": "/usr/bin/g++"
+			}
+		},
+
+		{
+			"name": "macos-host-base",
+			"inherits": "base",
+			"hidden": true,
+			"condition": {
+				"type": "equals",
+				"lhs": "${hostSystemName}",
+				"rhs": "Darwin"
+			}
+		},
+		{
+			"name": "macos-base",
+			"inherits": "macos-host-base",
+			"hidden": true,
+			"cacheVariables": {
+				"BINARY_OUTPUT_DIRECTORY": "${sourceParentDir}/bin/MacOS"
+			}
+		},
+		{
+			"name": "macos-ninja-base",
+			"inherits": [
+				"macos-host-base",
+				"ninja-base"
+			],
+			"hidden": true,
+			"cacheVariables": {
+				"CMAKE_MAKE_PROGRAM": "${sourceParentDir}/tools/ninja/MacOS/ninja"
+			}
+		},
+		{
+			"name": "macos-xcode-base",
+			"hidden": true,
+			"generator": "Xcode"
+		},
+		{
+			"name": "macos-xcode",
+			"inherits": [
+				"macos-base",
+				"macos-xcode-base"
+			],
+			"displayName": "macOS Xcode",
+			"description": "Compiles the full engine for MacOS with Xcode"
+		},
+
+		{
+			"name": "iOS+macCatalyst-xcode",
+			"inherits": [
+				"macos-host-base",
+				"macos-xcode-base"
+			],
+			"displayName": "iOS & macCatalyst Xcode",
+			"description": "Compiles the full engine for iOS and macCatalyst with Xcode",
+			"cacheVariables": {
+				"CMAKE_SYSTEM_NAME": "iOS"
+			}
+		},
+		{
+			"name": "visionOS-xcode",
+			"inherits": [
+				"macos-host-base",
+				"macos-xcode-base"
+			],
+			"displayName": "visionOS Xcode",
+			"description": "Compiles the full engine for visionOS with Xcode",
+			"cacheVariables": {
+				"CMAKE_SYSTEM_NAME": "visionOS"
+			}
+		},
+
+		{
+			"name": "windows-base",
+			"inherits": "base",
+			"hidden": true,
+			"architecture": {
+				"value": "x64",
+				"strategy": "external"
+			},
+			"condition": {
+				"type": "equals",
+				"lhs": "${hostSystemName}",
+				"rhs": "Windows"
+			},
+			"cacheVariables": {
+				"BINARY_OUTPUT_DIRECTORY": "${sourceParentDir}/bin/Windows"
+			}
+		},
+		{
+			"name": "windows-clang-base",
+			"inherits": [
+				"windows-base"
+			],
+			"hidden": true,
+			"cacheVariables": {
+				"CMAKE_C_COMPILER": "clang-cl",
+				"CMAKE_CXX_COMPILER": "clang-cl"
+			},
+			"vendor": {
+				"microsoft.com/VisualStudioSettings/CMake/1.0": {
+					"intelliSenseMode": "windows-clang-x64"
+				}
+			}
+		},
+
+		{
+			"name": "windows-vs2022-base",
+			"hidden": true,
+			"generator": "Visual Studio 17 2022",
+			"vendor": {
+				"jetbrains.com/clion": {
+					"toolchain": "Visual Studio"
+				}
+			}
+		},
+		{
+			"name": "windows-ninja-base",
+			"inherits": [
+				"windows-base",
+				"ninja-base"
+			],
+			"hidden": true,
+			"cacheVariables": {
+				"CMAKE_MAKE_PROGRAM": "${sourceParentDir}/tools/ninja/Windows/ninja.exe"
+			}
+		},
+
+		{
+			"name": "windows-msvc-x64-vs2022",
+			"inherits": [
+				"windows-base",
+				"windows-vs2022-base"
+			],
+			"displayName": "Windows MSVC x64 VS2022",
+			"description": "Compiles the full engine for Windows x64 with MSVC and Visual Studio 2022"
+		},
+		{
+			"name": "windows-clang-x64-vs2022",
+			"inherits": [
+				"windows-clang-base",
+				"windows-vs2022-base"
+			],
+			"toolset": "ClangCL",
+			"displayName": "Windows Clang x64 VS2022",
+			"description": "Compiles the full engine for Windows x64 with Clang and Visual Studio 2022"
+		},
+		{
+			"name": "windows-msvc-x64-ninja",
+			"inherits": "windows-ninja-base",
+			"displayName": "Windows MSVC x64 Ninja",
+			"description": "Compiles the full engine for Windows x64 with MSVC and Ninja"
+		},
+		{
+			"name": "windows-clang-x64-ninja",
+			"inherits": [
+				"windows-clang-base",
+				"windows-ninja-base"
+			],
+			"displayName": "Windows Clang x64 Ninja",
+			"description": "Compiles the full engine for Windows x64 with Clang and Ninja"
+		},
+
+		{
+			"name": "web-base",
+			"hidden": true,
+			"environment": {
+				"CMAKE_C_COMPILER": "emcc",
+				"CMAKE_CXX_COMPILER": "emcc"
+			},
+			"cacheVariables": {
+				"BINARY_OUTPUT_DIRECTORY": "${sourceParentDir}/bin/Web",
+				"EMSCRIPTEN": true
+			},
+			"toolchainFile": "$env{EMSCRIPTEN}/cmake/Modules/Platform/Emscripten.cmake"
+		},
+		{
+			"name": "windows-web-ninja",
+			"inherits": [
+				"base",
+				"windows-ninja-base",
+				"windows-clang-base",
+				"web-base"
+			],
+			"displayName": "Web Ninja Windows",
+			"description": "Compiles the full engine for Web with Emscripten and Ninja"
+		},
+		{
+			"name": "macos-web-ninja",
+			"inherits": [
+				"base",
+				"macos-ninja-base",
+				"web-base"
+			],
+			"displayName": "Web Ninja MacOS",
+			"description": "Compiles the full engine for Web with Emscripten and Ninja"
+		},
+		{
+			"name": "linux-web-ninja",
+			"inherits": [
+				"base",
+				"linux-ninja-base",
+				"web-base"
+			],
+			"displayName": "Web Ninja Linux",
+			"description": "Compiles the full engine for Web with Emscripten and Ninja"
+		}
+	],
+	"buildPresets": [
+		{
+			"name": "windows-msvc-x64-vs2022-debug",
+			"displayName": "Debug",
+			"configurePreset": "windows-msvc-x64-vs2022",
+			"configuration": "Debug"
+		},
+		{
+			"name": "windows-msvc-x64-vs2022-profile",
+			"displayName": "Profile",
+			"configurePreset": "windows-msvc-x64-vs2022",
+			"configuration": "Profile"
+		},
+		{
+			"name": "windows-msvc-x64-vs2022-release",
+			"displayName": "Release",
+			"configurePreset": "windows-msvc-x64-vs2022",
+			"configuration": "RelWithDebInfo"
+		},
+
+		{
+			"name": "windows-clang-x64-vs2022-debug",
+			"displayName": "Debug",
+			"configurePreset": "windows-clang-x64-vs2022",
+			"configuration": "Debug"
+		},
+		{
+			"name": "windows-clang-x64-vs2022-profile",
+			"displayName": "Profile",
+			"configurePreset": "windows-clang-x64-vs2022",
+			"configuration": "Profile"
+		},
+		{
+			"name": "windows-clang-x64-vs2022-release",
+			"displayName": "Release",
+			"configurePreset": "windows-clang-x64-vs2022",
+			"configuration": "RelWithDebInfo"
+		},
+
+		{
+			"name": "windows-msvc-x64-ninja-debug",
+			"displayName": "Debug",
+			"configurePreset": "windows-msvc-x64-ninja",
+			"configuration": "Debug"
+		},
+		{
+			"name": "windows-msvc-x64-ninja-profile",
+			"displayName": "Profile",
+			"configurePreset": "windows-msvc-x64-ninja",
+			"configuration": "Profile"
+		},
+		{
+			"name": "windows-msvc-x64-ninja-release",
+			"displayName": "Release",
+			"configurePreset": "windows-msvc-x64-ninja",
+			"configuration": "RelWithDebInfo"
+		},
+
+		{
+			"name": "windows-clang-x64-ninja-debug",
+			"displayName": "Debug",
+			"configurePreset": "windows-clang-x64-ninja",
+			"configuration": "Debug"
+		},
+		{
+			"name": "windows-clang-x64-ninja-profile",
+			"displayName": "Profile",
+			"configurePreset": "windows-clang-x64-ninja",
+			"configuration": "Profile"
+		},
+		{
+			"name": "windows-clang-x64-ninja-release",
+			"displayName": "Release",
+			"configurePreset": "windows-clang-x64-ninja",
+			"configuration": "RelWithDebInfo"
+		},
+
+		{
+			"name": "linux-clang-ninja-debug",
+			"displayName": "Debug",
+			"configurePreset": "linux-clang-ninja",
+			"configuration": "Debug"
+		},
+		{
+			"name": "linux-clang-ninja-profile",
+			"displayName": "Profile",
+			"configurePreset": "linux-clang-ninja",
+			"configuration": "Profile"
+		},
+		{
+			"name": "linux-clang-ninja-release",
+			"displayName": "Release",
+			"configurePreset": "linux-clang-ninja",
+			"configuration": "RelWithDebInfo"
+		},
+
+		{
+			"name": "linux-gcc-ninja-debug",
+			"displayName": "Debug",
+			"configurePreset": "linux-gcc-ninja",
+			"configuration": "Debug"
+		},
+		{
+			"name": "linux-gcc-ninja-profile",
+			"displayName": "Profile",
+			"configurePreset": "linux-gcc-ninja",
+			"configuration": "Profile"
+		},
+		{
+			"name": "linux-gcc-ninja-release",
+			"displayName": "Release",
+			"configurePreset": "linux-gcc-ninja",
+			"configuration": "RelWithDebInfo"
+		},
+
+		{
+			"name": "macos-xcode-debug",
+			"displayName": "Debug",
+			"configurePreset": "macos-xcode",
+			"configuration": "Debug"
+		},
+		{
+			"name": "macos-xcode-profile",
+			"displayName": "Profile",
+			"configurePreset": "macos-xcode",
+			"configuration": "Profile"
+		},
+		{
+			"name": "macos-xcode-release",
+			"displayName": "Release",
+			"configurePreset": "macos-xcode",
+			"configuration": "RelWithDebInfo"
+		},
+
+		{
+			"name": "iOS+macCatalyst-xcode-debug",
+			"displayName": "Debug",
+			"configurePreset": "iOS+macCatalyst-xcode",
+			"configuration": "Debug"
+		},
+		{
+			"name": "iOS+macCatalyst-xcode-profile",
+			"displayName": "Profile",
+			"configurePreset": "iOS+macCatalyst-xcode",
+			"configuration": "Profile"
+		},
+		{
+			"name": "iOS+macCatalyst-xcode-release",
+			"displayName": "Release",
+			"configurePreset": "iOS+macCatalyst-xcode",
+			"configuration": "RelWithDebInfo"
+		},
+
+		{
+			"name": "visionOS-xcode-debug",
+			"displayName": "Debug",
+			"configurePreset": "visionOS-xcode",
+			"configuration": "Debug"
+		},
+		{
+			"name": "visionOS-xcode-profile",
+			"displayName": "Profile",
+			"configurePreset": "visionOS-xcode",
+			"configuration": "Profile"
+		},
+		{
+			"name": "visionOS-xcode-release",
+			"displayName": "Release",
+			"configurePreset": "visionOS-xcode",
+			"configuration": "RelWithDebInfo"
+		},
+
+		{
+			"name": "windows-web-wasm-ninja-debug",
+			"displayName": "Debug",
+			"configurePreset": "windows-web-ninja",
+			"configuration": "Debug"
+		},
+		{
+			"name": "windows-web-wasm-ninja-profile",
+			"displayName": "Profile",
+			"configurePreset": "windows-web-ninja",
+			"configuration": "Profile"
+		},
+		{
+			"name": "windows-web-wasm-ninja-release",
+			"displayName": "Release",
+			"configurePreset": "windows-web-ninja",
+			"configuration": "RelWithDebInfo"
+		},
+
+		{
+			"name": "macos-web-wasm-ninja-debug",
+			"displayName": "Debug",
+			"configurePreset": "macos-web-ninja",
+			"configuration": "Debug"
+		},
+		{
+			"name": "macos-web-wasm-ninja-profile",
+			"displayName": "Profile",
+			"configurePreset": "macos-web-ninja",
+			"configuration": "Profile"
+		},
+		{
+			"name": "macos-web-wasm-ninja-release",
+			"displayName": "Release",
+			"configurePreset": "macos-web-ninja",
+			"configuration": "RelWithDebInfo"
+		},
+
+		{
+			"name": "linux-web-wasm-ninja-debug",
+			"displayName": "Debug",
+			"configurePreset": "linux-web-ninja",
+			"configuration": "Debug"
+		},
+		{
+			"name": "linux-web-wasm-ninja-profile",
+			"displayName": "Profile",
+			"configurePreset": "linux-web-ninja",
+			"configuration": "Profile"
+		},
+		{
+			"name": "linux-web-wasm-ninja-release",
+			"displayName": "Release",
+			"configurePreset": "linux-web-ninja",
+			"configuration": "RelWithDebInfo"
+		}
+	]
+}

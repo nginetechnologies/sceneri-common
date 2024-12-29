@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+  <Type Name="ngine::Memory::DynamicAllocator&lt;*,*&gt;">
+    <DisplayString>{{ capacity={m_capacity} }}</DisplayString>
+    <Expand>
+      <Item Name="[capacity]" ExcludeView="simple">m_capacity</Item>
+      <ArrayItems>
+        <Size>m_capacity</Size>
+        <ValuePointer>($T1*)m_pData</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="ngine::Memory::FixedAllocator&lt;*,*&gt;">
+    <DisplayString>{{ capacity={$T2} }}</DisplayString>
+    <Expand>
+      <Item Name="[capacity]">$T2</Item>
+      <ArrayItems>
+        <Size>$T2</Size>
+        <ValuePointer>($T1*)&amp;m_elementStorage</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="ngine::Memory::DynamicInlineStorageAllocator&lt;*,*&gt;">
+    <DisplayString>{{ capacity={m_capacity} }}</DisplayString>
+    <Expand>
+      <Item Name="[capacity]" ExcludeView="simple">m_capacity</Item>
+      <ArrayItems>
+        <Size>m_capacity</Size>
+        <ValuePointer Condition="m_capacity &lt;= $T2">($T1*)&amp;m_fixedAllocator.m_elementStorage</ValuePointer>
+        <ValuePointer Condition="m_capacity > $T2">($T1*)m_pData</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="ngine::TVector&lt;*,ngine::Memory::DynamicAllocator&lt;*&gt;,*&gt;">
+    <Intrinsic Name="size" Expression="m_size" />
+    <DisplayString>{{ size={m_size} }}</DisplayString>
+    <Expand>
+      <Item Name="[allocator]">m_allocator</Item>
+      <ArrayItems>
+        <Size>m_size</Size>
+        <ValuePointer>($T1*)m_allocator.m_pData</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="ngine::TVector&lt;*,ngine::Memory::DynamicInlineStorageAllocator&lt;*,*&gt;,*&gt;">
+    <Intrinsic Name="size" Expression="m_size" />
+    <DisplayString>{{ size={m_size} }}</DisplayString>
+    <Expand>
+      <Item Name="[allocator]">m_allocator</Item>
+      <ArrayItems>
+        <Size>m_size</Size>
+        <ValuePointer Condition="m_allocator.m_capacity &lt;= $T3">($T1*)&amp;m_allocator.m_fixedAllocator.m_elementStorage</ValuePointer>
+        <ValuePointer Condition="m_allocator.m_capacity > $T3">($T1*)m_allocator.m_pData</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="ngine::TVector&lt;*,ngine::Memory::FixedAllocator&lt;*&gt;,*&gt;">
+    <Intrinsic Name="size" Expression="m_size" />
+    <DisplayString>{{ size={m_size} }}</DisplayString>
+    <Expand>
+      <Item Name="[allocator]">m_allocator</Item>
+      <ArrayItems>
+        <Size>m_size</Size>
+        <ValuePointer>($T1*)&amp;m_allocator.m_elementStorage</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="ngine::Array&lt;*,*,*&gt;">
+    <Intrinsic Name="size" Expression="$T2" />
+    <DisplayString>{{ size={$T2} }}</DisplayString>
+    <Expand>
+      <ArrayItems>
+        <Size>$T2</Size>
+        <ValuePointer>m_data</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="ngine::ArrayView&lt;*&gt;">
+    <Intrinsic Name="size" Expression="m_size" />
+    <DisplayString>{{ size={m_size} }}</DisplayString>
+    <Expand>
+      <ArrayItems>
+        <Size>m_size</Size>
+        <ValuePointer>m_pBegin</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="ngine::FixedArrayView&lt;*,*&gt;">
+    <Intrinsic Name="size" Expression="$T2" />
+    <DisplayString>{{ size={$T2} }}</DisplayString>
+    <Expand>
+      <ArrayItems>
+        <Size>$T2</Size>
+        <ValuePointer>m_data</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="ngine::TString&lt;wchar_t,ngine::Memory::DynamicAllocator&lt;wchar_t,*&gt;,*&gt;">
+    <DisplayString>{(wchar_t*)m_allocator.m_pData,su}</DisplayString>
+    <StringView>(wchar_t*)m_allocator.m_pData,su</StringView>
+    <Expand>
+      <Item Name="[size]" ExcludeView="simple">m_size</Item>
+      <Item Name="[allocator]" ExcludeView="simple">m_allocator</Item>
+      <ArrayItems>
+        <Size>m_size</Size>
+        <ValuePointer>(wchar_t*)m_allocator.m_pData</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="ngine::TString&lt;wchar_t,ngine::Memory::DynamicInlineStorageAllocator&lt;wchar_t,*&gt;,*&gt;">
+    <DisplayString Condition="m_allocator.m_capacity &lt;= $T1">{(wchar_t*)&amp;m_allocator.m_fixedAllocator.m_elementStorage,su}</DisplayString>
+    <DisplayString Condition="m_allocator.m_capacity > $T1">{(wchar_t*)m_allocator.m_pData,su}</DisplayString>
+    <StringView Condition="m_allocator.m_capacity &lt;= $T1">(wchar_t*)&amp;m_allocator.m_fixedAllocator.m_elementStorage,su</StringView>
+    <StringView Condition="m_allocator.m_capacity > $T1">(wchar_t*)m_allocator.m_pData,su</StringView>
+    <Expand>
+      <Item Name="[size]" ExcludeView="simple">m_size</Item>
+      <Item Name="[allocator]" ExcludeView="simple">m_allocator</Item>
+      <ArrayItems>
+        <Size>m_size</Size>
+        <ValuePointer Condition="m_allocator.m_capacity &lt;= $T1">(wchar_t*)&amp;m_allocator.m_fixedAllocator.m_elementStorage</ValuePointer>
+        <ValuePointer Condition="m_allocator.m_capacity > $T1">(wchar_t*)m_allocator.m_pData</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="ngine::TString&lt;wchar_t,ngine::Memory::FixedAllocator&lt;wchar_t,*&gt;,*&gt;">
+    <DisplayString>{(wchar_t*)&amp;m_allocator.m_elementStorage,su}</DisplayString>
+    <StringView>(wchar_t*)&amp;m_allocator.m_elementStorage,su</StringView>
+    <Expand>
+      <Item Name="[size]" ExcludeView="simple">m_size</Item>
+      <Item Name="[allocator]" ExcludeView="simple">m_allocator</Item>
+      <ArrayItems>
+        <Size>m_size</Size>
+        <ValuePointer>(wchar_t*)&amp;m_allocator.m_elementStorage</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="ngine::TString&lt;char,ngine::Memory::DynamicAllocator&lt;char,*&gt;,*&gt;">
+    <DisplayString>{(char*)m_allocator.m_pData,s}</DisplayString>
+    <StringView>(char*)m_allocator.m_pData,s</StringView>
+    <Expand>
+      <Item Name="[size]" ExcludeView="simple">m_size</Item>
+      <Item Name="[allocator]" ExcludeView="simple">m_allocator</Item>
+      <ArrayItems>
+        <Size>m_size</Size>
+        <ValuePointer>(char*)m_allocator.m_pData</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="ngine::TString&lt;char,ngine::Memory::DynamicInlineStorageAllocator&lt;char,*&gt;,*&gt;">
+    <DisplayString Condition="m_allocator.m_capacity &lt;= $T1">{(char*)&amp;m_allocator.m_fixedAllocator.m_elementStorage,s}</DisplayString>
+    <DisplayString Condition="m_allocator.m_capacity > $T1">{(char*)m_allocator.m_pData,s}</DisplayString>
+    <StringView Condition="m_allocator.m_capacity &lt;= $T1">(char*)&amp;m_allocator.m_fixedAllocator.m_elementStorage,s</StringView>
+    <StringView Condition="m_allocator.m_capacity > $T1">(char*)m_allocator.m_pData,s</StringView>
+    <Expand>
+      <Item Name="[size]" ExcludeView="simple">m_size</Item>
+      <Item Name="[allocator]" ExcludeView="simple">m_allocator</Item>
+      <ArrayItems>
+        <Size>m_size</Size>
+        <ValuePointer Condition="m_allocator.m_capacity &lt;= $T1">(char*)&amp;m_allocator.m_fixedAllocator.m_elementStorage</ValuePointer>
+        <ValuePointer Condition="m_allocator.m_capacity > $T1">(char*)m_allocator.m_pData</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="ngine::TString&lt;char,ngine::Memory::FixedAllocator&lt;char,*&gt;,*&gt;">
+    <DisplayString>{(char*)&amp;m_allocator.m_elementStorage,s}</DisplayString>
+    <StringView>(char*)&amp;m_allocator.m_elementStorage,s</StringView>
+    <Expand>
+      <Item Name="[size]" ExcludeView="simple">m_size</Item>
+      <Item Name="[allocator]" ExcludeView="simple">m_allocator</Item>
+      <ArrayItems>
+        <Size>m_size</Size>
+        <ValuePointer>(char*)&amp;m_allocator.m_elementStorage</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="ngine::TStringView&lt;wchar_t,*&gt;">
+    <DisplayString>{m_pBegin,[m_size]}</DisplayString>
+    <StringView>m_pBegin,[m_size]</StringView>
+    <Expand>
+      <Item Name="[size]" ExcludeView="simple">m_size</Item>
+      <ArrayItems>
+        <Size>m_size</Size>
+        <ValuePointer>m_pBegin</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+  <Type Name="ngine::TStringView&lt;const wchar_t,*&gt;">
+    <DisplayString>{m_pBegin,[m_size]}</DisplayString>
+    <StringView>m_pBegin,[m_size]</StringView>
+    <Expand>
+      <Item Name="[size]" ExcludeView="simple">m_size</Item>
+      <ArrayItems>
+        <Size>m_size</Size>
+        <ValuePointer>m_pBegin</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+  <Type Name="ngine::TStringView&lt;char,*&gt;">
+    <DisplayString>{m_pBegin,[m_size]}</DisplayString>
+    <StringView>m_pBegin,[m_size]</StringView>
+    <Expand>
+      <Item Name="[size]" ExcludeView="simple">m_size</Item>
+      <ArrayItems>
+        <Size>m_size</Size>
+        <ValuePointer>m_pBegin</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+  <Type Name="ngine::TStringView&lt;const char,*&gt;">
+    <DisplayString>{m_pBegin,[m_size]}</DisplayString>
+    <StringView>m_pBegin,[m_size]</StringView>
+    <Expand>
+      <Item Name="[size]" ExcludeView="simple">m_size</Item>
+      <ArrayItems>
+        <Size>m_size</Size>
+        <ValuePointer>m_pBegin</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="ngine::IO::Path">
+    <DisplayString>{m_path}</DisplayString>
+    <StringView>m_path</StringView>
+    <Expand>
+      <ExpandedItem>m_path</ExpandedItem>
+    </Expand>
+  </Type>
+	<Type Name="ngine::IO::TPathView&lt;const char,*&gt;">
+		<DisplayString>{m_pBegin,[m_size]}</DisplayString>
+		<StringView>m_pBegin,[m_size]</StringView>
+		<Expand>
+			<Item Name="[size]" ExcludeView="simple">m_size</Item>
+			<ArrayItems>
+				<Size>m_size</Size>
+				<ValuePointer>m_pBegin</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+	<Type Name="ngine::IO::TPathView&lt;const wchar_t,*&gt;">
+		<DisplayString>{m_pBegin,[m_size]}</DisplayString>
+		<StringView>m_pBegin,[m_size]</StringView>
+		<Expand>
+			<Item Name="[size]" ExcludeView="simple">m_size</Item>
+			<ArrayItems>
+				<Size>m_size</Size>
+				<ValuePointer>m_pBegin</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+	<Type Name="ngine::IO::TPathView&lt;char,*&gt;">
+		<DisplayString>{m_pBegin,[m_size]}</DisplayString>
+		<StringView>m_pBegin,[m_size]</StringView>
+		<Expand>
+			<Item Name="[size]" ExcludeView="simple">m_size</Item>
+			<ArrayItems>
+				<Size>m_size</Size>
+				<ValuePointer>m_pBegin</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+	<Type Name="ngine::IO::TPathView&lt;wchar_t,*&gt;">
+		<DisplayString>{m_pBegin,[m_size]}</DisplayString>
+		<StringView>m_pBegin,[m_size]</StringView>
+		<Expand>
+			<Item Name="[size]" ExcludeView="simple">m_size</Item>
+			<ArrayItems>
+				<Size>m_size</Size>
+				<ValuePointer>m_pBegin</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+
+  <Type Name="ngine::UniquePtr&lt;*&gt;">
+    <SmartPointer Usage="Minimal">m_pElement</SmartPointer>
+    <DisplayString Condition="m_pElement == 0">empty</DisplayString>
+    <DisplayString Condition="m_pElement != 0">UniquePtr {*m_pElement}</DisplayString>
+    <Expand>
+      <Item Condition="m_pElement != 0" Name="[ptr]">m_pElement</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="ngine::Guid">
+    <DisplayString>{*(GUID*)this}</DisplayString>
+  </Type>
+
+  <Type Name="ngine::EnumFlags&lt;*&gt;">
+    <DisplayString>{($T1)m_flags}</DisplayString>
+  </Type>
+
+  <Type Name="ngine::Optional&lt;*&gt;">
+    <DisplayString Condition="!IsValid()">Invalid</DisplayString>
+    <DisplayString Condition="IsValid()">{*($T1*)this}</DisplayString>
+  </Type>
+
+  <Type Name="ngine::UnorderedMap&lt;*&gt;">
+    <Intrinsic Name="size" Expression="m_map.size_" />
+    <DisplayString Condition="m_map.size_ == 0">empty</DisplayString>
+    <DisplayString>{{ size={m_map.size_} }}</DisplayString>
+    <Expand>
+      <Item Name="[size]" ExcludeView="simple">m_map.size_</Item>
+      <Item Name="[capacity]" ExcludeView="simple">m_map.capacity_</Item>
+      <CustomListItems MaxItemsPerView="5000">
+        <Variable Name="slotIndex" InitialValue="0" />
+        <Size>m_map.size_</Size>
+        <Loop>
+          <If Condition="m_map.ctrl_[slotIndex] &gt;= 0">
+            <Item>m_map.slots_[slotIndex]</Item>
+          </If>
+          <Exec>slotIndex++</Exec>
+          <Break Condition="slotIndex == m_map.capacity_" />
+        </Loop>
+      </CustomListItems>
+    </Expand>
+  </Type>
+
+</AutoVisualizer>
