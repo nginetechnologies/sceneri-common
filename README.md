@@ -4,6 +4,7 @@ This is the Common API of the [Sceneri](http://sceneri.com) game / interactive m
 
 The common library is routinely tested on:
 - Windows (x64)
+- Linux (x64)
 - macOS (x64 & arm64)
 - iOS (arm64)
 - visionOS (arm64)
