@@ -15,4 +15,4 @@ The library is currently provided as-is, but we encourage using it in your proje
 
 Keep in mind that Sceneri is optimized for performance, and this standard library does take shortcuts where possible - don't expect full conformance to the C++ std library. We follow the principle of breaking often until Sceneri is where we want it to be, so no guarantees of API & ABI stability for mow.
 
-![Discord Banner 2](https://discord.com/api/guilds/842853727606013963/widget.png?style=banner2)
+![Discord Shield](https://discord.com/api/guilds/842853727606013963/widget.png?style=shield)
