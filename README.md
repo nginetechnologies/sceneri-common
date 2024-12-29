@@ -1,6 +1,6 @@
 ![Sceneri_Banner](https://github.com/user-attachments/assets/2f9cc95e-b40d-4c29-86e0-7b9b3cdff32a)
 
-This is the Common API of the [Sceneri](http://sceneri.com) game / interactive media engine supporting creation & play of 2D and 3D experiences on and for any device.
+This is the Common API of the [Sceneri](http://sceneri.com) game / interactive media engine supporting creation & play of 2D and 3D experiences on and for any device. This API drives the low-level core of Sceneri, and does not include the engine itself.
 
 The common library is routinely tested on:
 - Windows (x64)
