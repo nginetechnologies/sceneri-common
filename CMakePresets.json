@@ -33,7 +33,7 @@
 				"rhs": "Linux"
 			},
 			"cacheVariables": {
-				"BINARY_OUTPUT_DIRECTORY": "${sourceParentDir}/bin/Linux"
+				"BINARY_OUTPUT_DIRECTORY": "${sourceDir}/bin/Linux"
 			}
 		},
 		{
@@ -44,7 +44,7 @@
 			],
 			"hidden": true,
 			"cacheVariables": {
-				"CMAKE_MAKE_PROGRAM": "${sourceParentDir}/tools/ninja/Linux/ninja"
+				"CMAKE_MAKE_PROGRAM": "${sourceDir}/tools/ninja/Linux/ninja"
 			}
 		},
 		{
@@ -89,7 +89,7 @@
 			"inherits": "macos-host-base",
 			"hidden": true,
 			"cacheVariables": {
-				"BINARY_OUTPUT_DIRECTORY": "${sourceParentDir}/bin/MacOS"
+				"BINARY_OUTPUT_DIRECTORY": "${sourceDir}/bin/MacOS"
 			}
 		},
 		{
@@ -100,7 +100,7 @@
 			],
 			"hidden": true,
 			"cacheVariables": {
-				"CMAKE_MAKE_PROGRAM": "${sourceParentDir}/tools/ninja/MacOS/ninja"
+				"CMAKE_MAKE_PROGRAM": "${sourceDir}/tools/ninja/MacOS/ninja"
 			}
 		},
 		{
@@ -157,7 +157,7 @@
 				"rhs": "Windows"
 			},
 			"cacheVariables": {
-				"BINARY_OUTPUT_DIRECTORY": "${sourceParentDir}/bin/Windows"
+				"BINARY_OUTPUT_DIRECTORY": "${sourceDir}/bin/Windows"
 			}
 		},
 		{
@@ -195,7 +195,7 @@
 			],
 			"hidden": true,
 			"cacheVariables": {
-				"CMAKE_MAKE_PROGRAM": "${sourceParentDir}/tools/ninja/Windows/ninja.exe"
+				"CMAKE_MAKE_PROGRAM": "${sourceDir}/tools/ninja/Windows/ninja.exe"
 			}
 		},
 
@@ -242,7 +242,7 @@
 				"CMAKE_CXX_COMPILER": "emcc"
 			},
 			"cacheVariables": {
-				"BINARY_OUTPUT_DIRECTORY": "${sourceParentDir}/bin/Web",
+				"BINARY_OUTPUT_DIRECTORY": "${sourceDir}/bin/Web",
 				"EMSCRIPTEN": true
 			},
 			"toolchainFile": "$env{EMSCRIPTEN}/cmake/Modules/Platform/Emscripten.cmake"
