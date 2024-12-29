@@ -1,0 +1,281 @@
+name: Build Common
+
+on:
+  pull_request:
+    branches:
+    - main
+  push:
+    branches:
+    - main
+
+jobs:
+  build-windows:
+    name: "Windows Debug"
+
+    runs-on: [self-hosted, windows]
+
+    steps:
+    - name: checkout engine without LFS
+      uses: actions/checkout@v4
+      with:
+        lfs: false
+    - name: apply_lfs_filters
+      run: |
+        git config --local lfs.fetchexclude '**/MacOS/**,**/iOS/**,**/visionOS/**,**/Android**'
+    - name: checkout engine LFS
+      uses: actions/checkout@v4
+      with:
+        lfs: true
+    - name: Engine LFS Pull
+      run: git lfs pull
+    - name: checkout googletest
+      uses: actions/checkout@v4
+      with:
+        repository: nginetechnologies/googletest
+        ref: v1.10.x
+        path: Common/Public/Common/3rdparty/googletest
+    - name: configure
+      run: |
+        cd Code
+        mkdir IntermediateWindows
+        cd ../
+        cmake --preset=windows-msvc-x64-vs2022 -DOPTION_BUILD_UNIT_TESTS=ON -DOPTION_BUILD_FEATURE_TESTS=ON -S Code -B Code/IntermediateWindows -DOPTION_UNITY_BUILD=ON -DOPTION_CCACHE=ON -DOPTION_CONTINUOUS_INTEGRATION=ON
+    - name: build
+      run: cmake --build Code/IntermediateWindows --config Debug --parallel
+    - name: run tests
+      run: |
+        cd Code/IntermediateWindows
+        ctest -C Debug
+
+  build-linux:
+    name: "Linux Profile"
+
+    runs-on: [self-hosted, linux]
+
+    steps:
+    - name: checkout engine without LFS
+      uses: actions/checkout@v4
+      with:
+        lfs: false
+    - name: apply_lfs_filters
+      run: |
+        git config --local lfs.fetchexclude '**/MacOS/**,**/iOS/**,**/visionOS/**,**/macCatalyst/**,**/Android**,**/Windows/**'
+    - name: checkout engine LFS
+      uses: actions/checkout@v4
+      with:
+        lfs: true
+    - name: Engine LFS Pull
+      run: git lfs pull
+    - name: checkout googletest
+      uses: actions/checkout@v4
+      with:
+        repository: nginetechnologies/googletest
+        ref: v1.10.x
+        path: Code/Common/Public/Common/3rdparty/googletest
+    - name: Configure
+      run: |
+        docker run --rm --user $(id -u):$(id -g) -v ${{ github.workspace }}:/workspace -v ~:/home -e HOME=/home -w /workspace \
+          registry.gitlab.steamos.cloud/steamrt/sniper/sdk \
+          bash -c "
+            cmake -S Code -B /workspace/bld --preset=linux-clang-ninja -DOPTION_BUILD_UNIT_TESTS=ON -DOPTION_BUILD_FEATURE_TESTS=ON -DOPTION_UNITY_BUILD=ON -DOPTION_CCACHE=ON -DOPTION_PRECOMPILED_HEADERS=OFF
+        "
+    - name: Build Project System & Asset Compiler in Steam Runtime
+      run: |
+        docker run --rm --user $(id -u):$(id -g) -v ${{ github.workspace }}:/workspace -v ~:/home -e HOME=/home -w /workspace \
+          registry.gitlab.steamos.cloud/steamrt/sniper/sdk \
+          bash -c "
+          cmake --build /workspace/bld --config Profile --parallel
+        "
+    - name: run tests
+      run: |
+        docker run --rm --user $(id -u):$(id -g) -v ${{ github.workspace }}:/workspace -v ~:/home -e HOME=/home -w /workspace \
+          registry.gitlab.steamos.cloud/steamrt/sniper/sdk \
+          bash -c "
+          cd bld
+          ctest -C Profile
+        "
+
+  build-macos:
+    name: "MacOS Debug"
+
+    runs-on: [self-hosted, macOS]
+
+    steps:
+    - name: checkout engine without LFS
+      uses: actions/checkout@v4
+      with:
+        lfs: false
+    - name: apply_lfs_filters
+      run: |
+        git config --local lfs.fetchexclude '**/Windows/**,**/iOS/**,**/visionOS/**,**/Android/**'
+    - name: checkout engine with LFS
+      uses: actions/checkout@v4
+      with:
+        lfs: true
+    - name: Engine LFS Pull
+      run: git lfs pull
+    - name: checkout googletest
+      uses: actions/checkout@v4
+      with:
+        repository: nginetechnologies/googletest
+        ref: v1.10.x
+        path: Code/Common/Public/Common/3rdparty/googletest
+    - name: configure
+      run: |
+        cd Code
+        mkdir IntermediateMacOS
+        cd ../
+        cmake -S Code -B Code/IntermediateMacOS --preset=macos-xcode -DCMAKE_BUILD_TYPE=Debug -DOPTION_BUILD_UNIT_TESTS=ON -DOPTION_BUILD_FEATURE_TESTS=ON -DOPTION_UNITY_BUILD=ON -DOPTION_CCACHE=ON -DOPTION_CONTINUOUS_INTEGRATION=ON
+    - name: build
+      run: xcodebuild -parallelizeTargets -project Code/IntermediateMacOS/sceneri.xcodeproj/ -target ALL_BUILD -configuration Debug -allowProvisioningUpdates build
+    - name: run tests
+      run: |
+        cd Code/IntermediateMacOS
+        ctest -C Debug
+
+  build-ios-release:
+    name: "iOS Release"
+
+    runs-on: [self-hosted, macOS]
+    defaults:
+      run:
+        shell: "/usr/bin/arch -arch arm64e /bin/bash {0}"
+
+    steps:
+    - name: checkout engine
+      uses: actions/checkout@v4
+      with:
+        lfs: false
+    - name: apply_lfs_filters
+      run: |
+        git config --local lfs.fetchexclude '**/Windows/**,**/MacOS/**,**/iOS/arm64-iphonesimulator/**,**/iOS/arm64-maccatalyst/**,**/Android/**'
+    - uses: actions/checkout@v4
+      with:
+        lfs: true
+    - name: Engine LFS Pull
+      run: git lfs pull
+    - name: configure
+      run: |
+        cd Code
+        mkdir IntermediateiOS
+        cd ../
+        cmake -S Code -B Code/IntermediateiOS --preset=iOS+macCatalyst-xcode -DCMAKE_BUILD_TYPE=RelWithDebInfo -DOPTION_UNITY_BUILD=ON -DOPTION_CCACHE=ON -DOPTION_CONTINUOUS_INTEGRATION=ON
+    - name: build
+      run: xcodebuild -parallelizeTargets -project Code/IntermediateiOS/sceneri.xcodeproj/ -target ALL_BUILD -configuration RelWithDebInfo -destination generic/platform=iOS -allowProvisioningUpdates build
+
+  build-visionos-release:
+    name: "visionOS Profile"
+
+    runs-on: [self-hosted, macOS]
+    defaults:
+      run:
+        shell: "/usr/bin/arch -arch arm64e /bin/bash {0}"
+
+    steps:
+    - name: checkout engine
+      uses: actions/checkout@v4
+      with:
+        lfs: false
+    - name: apply_lfs_filters
+      run: |
+        git config --local lfs.fetchexclude '**/Windows/**,**/MacOS/**,**/iOS/arm64-iphonesimulator/**,**/iOS/arm64-iphoneos/**,**/Android/**'
+    - uses: actions/checkout@v4
+      with:
+        lfs: true
+    - name: Engine LFS Pull
+      run: git lfs pull
+    - name: configure
+      run: |
+        cd Code
+        mkdir IntermediateVisionOS
+        cd ../
+        cmake -S Code -B Code/IntermediateVisionOS --preset=visionOS-xcode -DCMAKE_BUILD_TYPE=Profile -DOPTION_UNITY_BUILD=ON -DOPTION_CCACHE=ON -DOPTION_CONTINUOUS_INTEGRATION=ON
+    - name: build
+      run: xcodebuild -parallelizeTargets -project Code/IntermediateVisionOS/sceneri.xcodeproj/ -target ALL_BUILD -configuration Profile -destination generic/platform=visionOS -allowProvisioningUpdates build
+
+  build-macos-catalyst-release:
+    name: "MacOS Catalyst Profile"
+
+    runs-on: [self-hosted, macOS]
+    defaults:
+      run:
+        shell: "/usr/bin/arch -arch arm64e /bin/bash {0}"
+
+    steps:
+    - name: checkout engine
+      uses: actions/checkout@v4
+      with:
+        lfs: false
+    - name: apply_lfs_filters
+      run: |
+        git config --local lfs.fetchexclude '**/Windows/**,**/MacOS/**,**/visionOS**/,**/Android/**'
+    - uses: actions/checkout@v4
+      with:
+        lfs: true
+    - name: Engine LFS Pull
+      run: git lfs pull
+    - name: configure
+      run: |
+        cd Code
+        mkdir IntermediateiOS
+        cd ../
+        cmake -S Code -B Code/IntermediateiOS --preset=iOS+macCatalyst-xcode -DCMAKE_BUILD_TYPE=Profile -DOPTION_UNITY_BUILD=ON -DOPTION_CCACHE=ON -DOPTION_CONTINUOUS_INTEGRATION=ON
+    - name: build
+      run: xcodebuild -parallelizeTargets -project Code/IntermediateiOS/sceneri.xcodeproj/ -target ALL_BUILD -configuration Profile -destination generic/platform=iOS -allowProvisioningUpdates build
+
+  build-android-release:
+    name: "Android Profile"
+    # Disable for now to avoid needing Gradle setup
+    if: false 
+
+    runs-on: [self-hosted, macOS]
+    defaults:
+      run:
+        shell: "/usr/bin/arch -arch arm64e /bin/bash {0}"
+
+    steps:
+    - name: checkout engine
+      uses: actions/checkout@v4
+      with:
+        lfs: false
+    - name: apply_lfs_filters
+      run: |
+        git config --local lfs.fetchexclude '**/Windows/**,**/MacOS/**,**/iOS/**,**/visionOS/**'
+    - uses: actions/checkout@v4
+      with:
+        lfs: true
+    - name: Engine LFS Pull
+      run: git lfs pull
+    - name: Build Android
+      run: |
+        cd Code
+        ./gradlew assembleArm64Profile
+
+  build-web:
+    name: "Web Release"
+
+    runs-on: [self-hosted, windows]
+
+    steps:
+    - name: checkout engine without LFS
+      uses: actions/checkout@v4
+      with:
+        lfs: false
+    - name: apply_lfs_filters
+      run: |
+        git config --local lfs.fetchexclude '**/MacOS/**,**/iOS/**,**/visionOS/**,**/Android**'
+    - name: checkout engine LFS
+      uses: actions/checkout@v4
+      with:
+        lfs: true
+    - name: Engine LFS Pull
+      run: git lfs pull
+    - name: configure
+      shell: cmd
+      run: |
+        cd Code
+        mkdir IntermediateWeb
+        cd ../
+        cmake -S Code -B Code/IntermediateWeb --preset=windows-web-ninja -DOPTION_UNITY_BUILD=ON -DOPTION_CCACHE=ON -DOPTION_CONTINUOUS_INTEGRATION=ON
+    - name: build
+      run: cmake --build Code/IntermediateWeb --target ALL_BUILD --config RelWithDebInfo --parallel
