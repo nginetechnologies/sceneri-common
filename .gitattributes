@@ -8,3 +8,4 @@ tools/ninja/Linux/ninja filter=lfs diff=lfs merge=lfs -text
 tools/ninja/MacOS/ninja filter=lfs diff=lfs merge=lfs -text
 tools/format/bin/MacOS/clang-format filter=lfs diff=lfs merge=lfs -text
 tools/format/bin/Windows/clang-format.exe filter=lfs diff=lfs merge=lfs -text
+tools/format/bin/Windows/FormatAll.exe filter=lfs diff=lfs merge=lfs -text
