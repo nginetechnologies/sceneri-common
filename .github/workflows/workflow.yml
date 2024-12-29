@@ -265,4 +265,4 @@ jobs:
         mkdir IntermediateWeb
         cmake -S . -B IntermediateWeb --preset=windows-web-ninja -DOPTION_UNITY_BUILD=ON -DOPTION_CCACHE=ON -DOPTION_CONTINUOUS_INTEGRATION=ON
     - name: build
-      run: cmake --build IntermediateWeb --target ALL_BUILD --config RelWithDebInfo --parallel
+      run: cmake --build IntermediateWeb --target Common --config RelWithDebInfo --parallel
