@@ -39,12 +39,12 @@ jobs:
         cd Code
         mkdir IntermediateWindows
         cd ../
-        cmake --preset=windows-msvc-x64-vs2022 -DOPTION_BUILD_UNIT_TESTS=ON -DOPTION_BUILD_FEATURE_TESTS=ON -S Code -B Code/IntermediateWindows -DOPTION_UNITY_BUILD=ON -DOPTION_CCACHE=ON -DOPTION_CONTINUOUS_INTEGRATION=ON
+        cmake --preset=windows-msvc-x64-vs2022 -DOPTION_BUILD_UNIT_TESTS=ON -DOPTION_BUILD_FEATURE_TESTS=ON -S Code -B IntermediateWindows -DOPTION_UNITY_BUILD=ON -DOPTION_CCACHE=ON -DOPTION_CONTINUOUS_INTEGRATION=ON
     - name: build
-      run: cmake --build Code/IntermediateWindows --config Debug --parallel
+      run: cmake --build IntermediateWindows --config Debug --parallel
     - name: run tests
       run: |
-        cd Code/IntermediateWindows
+        cd IntermediateWindows
         ctest -C Debug
 
   build-linux:
@@ -71,7 +71,7 @@ jobs:
       with:
         repository: nginetechnologies/googletest
         ref: v1.10.x
-        path: Code/Common/Public/Common/3rdparty/googletest
+        path: Common/Public/Common/3rdparty/googletest
     - name: Configure
       run: |
         docker run --rm --user $(id -u):$(id -g) -v ${{ github.workspace }}:/workspace -v ~:/home -e HOME=/home -w /workspace \
@@ -119,18 +119,18 @@ jobs:
       with:
         repository: nginetechnologies/googletest
         ref: v1.10.x
-        path: Code/Common/Public/Common/3rdparty/googletest
+        path: Common/Public/Common/3rdparty/googletest
     - name: configure
       run: |
         cd Code
         mkdir IntermediateMacOS
         cd ../
-        cmake -S Code -B Code/IntermediateMacOS --preset=macos-xcode -DCMAKE_BUILD_TYPE=Debug -DOPTION_BUILD_UNIT_TESTS=ON -DOPTION_BUILD_FEATURE_TESTS=ON -DOPTION_UNITY_BUILD=ON -DOPTION_CCACHE=ON -DOPTION_CONTINUOUS_INTEGRATION=ON
+        cmake -S Code -B IntermediateMacOS --preset=macos-xcode -DCMAKE_BUILD_TYPE=Debug -DOPTION_BUILD_UNIT_TESTS=ON -DOPTION_BUILD_FEATURE_TESTS=ON -DOPTION_UNITY_BUILD=ON -DOPTION_CCACHE=ON -DOPTION_CONTINUOUS_INTEGRATION=ON
     - name: build
-      run: xcodebuild -parallelizeTargets -project Code/IntermediateMacOS/sceneri.xcodeproj/ -target ALL_BUILD -configuration Debug -allowProvisioningUpdates build
+      run: xcodebuild -parallelizeTargets -project IntermediateMacOS/sceneri.xcodeproj/ -target ALL_BUILD -configuration Debug -allowProvisioningUpdates build
     - name: run tests
       run: |
-        cd Code/IntermediateMacOS
+        cd IntermediateMacOS
         ctest -C Debug
 
   build-ios-release:
@@ -159,9 +159,9 @@ jobs:
         cd Code
         mkdir IntermediateiOS
         cd ../
-        cmake -S Code -B Code/IntermediateiOS --preset=iOS+macCatalyst-xcode -DCMAKE_BUILD_TYPE=RelWithDebInfo -DOPTION_UNITY_BUILD=ON -DOPTION_CCACHE=ON -DOPTION_CONTINUOUS_INTEGRATION=ON
+        cmake -S Code -B IntermediateiOS --preset=iOS+macCatalyst-xcode -DCMAKE_BUILD_TYPE=RelWithDebInfo -DOPTION_UNITY_BUILD=ON -DOPTION_CCACHE=ON -DOPTION_CONTINUOUS_INTEGRATION=ON
     - name: build
-      run: xcodebuild -parallelizeTargets -project Code/IntermediateiOS/sceneri.xcodeproj/ -target ALL_BUILD -configuration RelWithDebInfo -destination generic/platform=iOS -allowProvisioningUpdates build
+      run: xcodebuild -parallelizeTargets -project IntermediateiOS/sceneri.xcodeproj/ -target ALL_BUILD -configuration RelWithDebInfo -destination generic/platform=iOS -allowProvisioningUpdates build
 
   build-visionos-release:
     name: "visionOS Profile"
@@ -189,9 +189,9 @@ jobs:
         cd Code
         mkdir IntermediateVisionOS
         cd ../
-        cmake -S Code -B Code/IntermediateVisionOS --preset=visionOS-xcode -DCMAKE_BUILD_TYPE=Profile -DOPTION_UNITY_BUILD=ON -DOPTION_CCACHE=ON -DOPTION_CONTINUOUS_INTEGRATION=ON
+        cmake -S Code -B IntermediateVisionOS --preset=visionOS-xcode -DCMAKE_BUILD_TYPE=Profile -DOPTION_UNITY_BUILD=ON -DOPTION_CCACHE=ON -DOPTION_CONTINUOUS_INTEGRATION=ON
     - name: build
-      run: xcodebuild -parallelizeTargets -project Code/IntermediateVisionOS/sceneri.xcodeproj/ -target ALL_BUILD -configuration Profile -destination generic/platform=visionOS -allowProvisioningUpdates build
+      run: xcodebuild -parallelizeTargets -project IntermediateVisionOS/sceneri.xcodeproj/ -target ALL_BUILD -configuration Profile -destination generic/platform=visionOS -allowProvisioningUpdates build
 
   build-macos-catalyst-release:
     name: "MacOS Catalyst Profile"
@@ -219,9 +219,9 @@ jobs:
         cd Code
         mkdir IntermediateiOS
         cd ../
-        cmake -S Code -B Code/IntermediateiOS --preset=iOS+macCatalyst-xcode -DCMAKE_BUILD_TYPE=Profile -DOPTION_UNITY_BUILD=ON -DOPTION_CCACHE=ON -DOPTION_CONTINUOUS_INTEGRATION=ON
+        cmake -S Code -B IntermediateiOS --preset=iOS+macCatalyst-xcode -DCMAKE_BUILD_TYPE=Profile -DOPTION_UNITY_BUILD=ON -DOPTION_CCACHE=ON -DOPTION_CONTINUOUS_INTEGRATION=ON
     - name: build
-      run: xcodebuild -parallelizeTargets -project Code/IntermediateiOS/sceneri.xcodeproj/ -target ALL_BUILD -configuration Profile -destination generic/platform=iOS -allowProvisioningUpdates build
+      run: xcodebuild -parallelizeTargets -project IntermediateiOS/sceneri.xcodeproj/ -target ALL_BUILD -configuration Profile -destination generic/platform=iOS -allowProvisioningUpdates build
 
   build-android-release:
     name: "Android Profile"
@@ -276,6 +276,6 @@ jobs:
         cd Code
         mkdir IntermediateWeb
         cd ../
-        cmake -S Code -B Code/IntermediateWeb --preset=windows-web-ninja -DOPTION_UNITY_BUILD=ON -DOPTION_CCACHE=ON -DOPTION_CONTINUOUS_INTEGRATION=ON
+        cmake -S Code -B IntermediateWeb --preset=windows-web-ninja -DOPTION_UNITY_BUILD=ON -DOPTION_CCACHE=ON -DOPTION_CONTINUOUS_INTEGRATION=ON
     - name: build
-      run: cmake --build Code/IntermediateWeb --target ALL_BUILD --config RelWithDebInfo --parallel
+      run: cmake --build IntermediateWeb --target ALL_BUILD --config RelWithDebInfo --parallel
