@@ -1,0 +1,10 @@
+*.dll filter=lfs diff=lfs merge=lfs -text
+*.lib filter=lfs diff=lfs merge=lfs -text
+*.exe filter=lfs diff=lfs merge=lfs -text
+*.dylib filter=lfs diff=lfs merge=lfs -text
+*.so filter=lfs diff=lfs merge=lfs -text
+tools/ninja/Windows/ninja.exe filter=lfs diff=lfs merge=lfs -text
+tools/ninja/Linux/ninja filter=lfs diff=lfs merge=lfs -text
+tools/ninja/MacOS/ninja filter=lfs diff=lfs merge=lfs -text
+tools/format/bin/MacOS/clang-format filter=lfs diff=lfs merge=lfs -text
+tools/format/bin/Windows/clang-format.exe filter=lfs diff=lfs merge=lfs -text
