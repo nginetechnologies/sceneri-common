@@ -542,7 +542,7 @@ namespace ngine::IO
 #elif PLATFORM_EMSCRIPTEN
 			return Path{MAKE_PATH("/opfs/data")};
 #elif PLATFORM_POSIX
-			return TPath::Combine(GetHomeDirectory(), MAKE_PATH("Library/Caches"), EngineInfo::Name.GetView());
+			return TPath::Combine(GetHomeDirectory(), MAKE_PATH("Library/Caches"), AppPathName);
 #endif
 		}();
 		return applicationDataDirectory;
@@ -569,7 +569,7 @@ namespace ngine::IO
 #elif PLATFORM_EMSCRIPTEN
 			return Path{MAKE_PATH("/opfs/cache")};
 #elif PLATFORM_POSIX
-			return TPath::Combine(GetHomeDirectory(), MAKE_PATH("Library/Caches"), EngineInfo::Name.GetView());
+			return TPath::Combine(GetHomeDirectory(), MAKE_PATH("Library/Caches"), AppPathName);
 #endif
 		}();
 		return applicationCacheDirectory;
@@ -615,7 +615,7 @@ namespace ngine::IO
 		const char* tempDirectory = getenv("TMPDIR");
 		if (tempDirectory == 0)
 			tempDirectory = "/tmp";
-		return TPath::Combine(PathView(tempDirectory, (PathView::SizeType)strlen(tempDirectory)), EngineInfo::Name.GetView());
+		return TPath::Combine(PathView(tempDirectory, (PathView::SizeType)strlen(tempDirectory)), AppPathName);
 #endif
 	}
 
@@ -644,7 +644,7 @@ namespace ngine::IO
 #elif PLATFORM_EMSCRIPTEN
 			return Path{MAKE_PATH("/opfs/user")};
 #elif PLATFORM_POSIX
-			return TPath::Combine(GetHomeDirectory(), EngineInfo::Name.GetView());
+			return TPath::Combine(GetHomeDirectory(), AppPathName);
 #endif
 		}();
 		return userDataDirectory;

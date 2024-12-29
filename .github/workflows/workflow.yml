@@ -77,7 +77,7 @@ jobs:
           bash -c "
             cmake -S . -B /workspace/bld --preset=linux-clang-ninja -DOPTION_BUILD_UNIT_TESTS=ON -DOPTION_BUILD_FEATURE_TESTS=ON -DOPTION_UNITY_BUILD=ON -DOPTION_CCACHE=ON -DOPTION_PRECOMPILED_HEADERS=OFF
         "
-    - name: Build Project System & Asset Compiler in Steam Runtime
+    - name: Build in Steam Runtime
       run: |
         docker run --rm --user $(id -u):$(id -g) -v ${{ github.workspace }}:/workspace -v ~:/home -e HOME=/home -w /workspace \
           registry.gitlab.steamos.cloud/steamrt/sniper/sdk \
