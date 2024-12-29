@@ -1,7 +1,7 @@
 ![Sceneri_Banner](https://github.com/user-attachments/assets/2f9cc95e-b40d-4c29-86e0-7b9b3cdff32a)
 
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/nginetechnologies/sceneri-common/.github%2Fworkflows%2Fworkflow.yml)
-![Discord](https://img.shields.io/discord/842853727606013963?style=plastic&logo=discord&logoColor=white&label=Discord&link=https%3A%2F%2Fdiscord.gg%2Fsceneriapp)
+[![Discord](https://img.shields.io/discord/842853727606013963?style=plastic&logo=discord&logoColor=white&label=Discord&link=https%3A%2F%2Fdiscord.gg%2Fsceneriapp)](https://discord.gg/sceneriapp)
 
 This is the Common API (aka standard library) of the [Sceneri](http://sceneri.com) game / interactive media engine supporting creation & play of 2D and 3D experiences on and for any device. This API drives the low-level core of Sceneri, and does not include the engine itself.
 
