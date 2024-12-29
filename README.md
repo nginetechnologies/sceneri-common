@@ -1,6 +1,6 @@
 ![Sceneri_Banner](https://github.com/user-attachments/assets/2f9cc95e-b40d-4c29-86e0-7b9b3cdff32a)
 
-This is the Common API of the [Sceneri](http://sceneri.com) game / interactive media engine supporting creation & play of 2D and 3D experiences on and for any device. This API drives the low-level core of Sceneri, and does not include the engine itself.
+This is the Common API (aka standard library) of the [Sceneri](http://sceneri.com) game / interactive media engine supporting creation & play of 2D and 3D experiences on and for any device. This API drives the low-level core of Sceneri, and does not include the engine itself.
 
 The common library is routinely tested on:
 - Windows (x64)
@@ -12,3 +12,5 @@ The common library is routinely tested on:
 - Web (WebAssembly, via Emscripten)
 
 The library is currently provided as-is, but we encourage using it in your projects and bringing improvements back via pull requests.
+
+Keep in mind that Sceneri is optimized for performance, and this standard library does take shortcuts where possible - don't expect full conformance to the C++ std library. We follow the principle of breaking often until Sceneri is where we want it to be, so no guarantees of API & ABI stability for mow.
