@@ -15,16 +15,22 @@ namespace ngine::Math
 	[[nodiscard]] FORCE_INLINE PURE_NOSTATICS constexpr bool IsPowerOfTwo(const Type value) noexcept
 	{
 		static_assert(TypeTraits::IsIntegral<Type>);
-		MathExpect(value > 0);
-		if constexpr (TypeTraits::IsUnsigned<Type>)
+		if (value > 0)
 		{
-			return (value & (value - 1)) == 0;
+			if constexpr (TypeTraits::IsUnsigned<Type>)
+			{
+				return (value & (value - 1)) == 0;
+			}
+			else
+			{
+				using UnsignedType = TypeTraits::Unsigned<Type>;
+				const UnsignedType unsignedValue = (UnsignedType)Math::Abs(value);
+				return (unsignedValue & (unsignedValue - 1)) == 0;
+			}
 		}
 		else
 		{
-			using UnsignedType = TypeTraits::Unsigned<Type>;
-			const UnsignedType unsignedValue = (UnsignedType)Math::Abs(value);
-			return (unsignedValue & (unsignedValue - 1)) == 0;
+			return false;
 		}
 	}
 
