@@ -5,7 +5,9 @@
 #include <Common/Memory/Containers/ForwardDeclarations/FlatString.h>
 #include <Common/Memory/Containers/ForwardDeclarations/String.h>
 #include <Common/Math/NumericLimits.h>
+#include <Common/Math/Frequency.h>
 #include <Common/Assert/Assert.h>
+#include <Common/Guid.h>
 
 #include "Duration.h"
 
@@ -14,9 +16,16 @@ namespace ngine::Time
 	//! Represents a timestamp in nanoseconds since UNIX epoch (00:00:00 UTC on January 1st 1970)
 	struct Timestamp
 	{
+		inline static constexpr Guid TypeGuid = "90ec507d-4d09-4594-a533-33a5fa8c149a"_guid;
+
 		using DurationType = Durationd;
+		using FrequencyType = Math::Frequencyd;
 
 		constexpr Timestamp()
+		{
+		}
+		constexpr Timestamp(const FrequencyType frequency)
+			: m_time{1000000000ull / (uint64)frequency.GetHertz()}
 		{
 		}
 
@@ -58,6 +67,10 @@ namespace ngine::Time
 		[[nodiscard]] FORCE_INLINE constexpr DurationType GetDuration() const
 		{
 			return DurationType::FromNanoseconds(m_time);
+		}
+		[[nodiscard]] FORCE_INLINE constexpr FrequencyType GetFrequency() const
+		{
+			return FrequencyType::FromHertz(FrequencyType::UnitType(1000000000ull / GetNanoseconds()));
 		}
 
 		[[nodiscard]] FORCE_INLINE constexpr bool operator>(const Timestamp other) const
@@ -137,6 +150,15 @@ namespace ngine::Time
 		FORCE_INLINE constexpr void operator-=(const Duration<DurationUnitType> duration)
 		{
 			m_time -= static_cast<int64>(duration.GetNanoseconds());
+		}
+
+		[[nodiscard]] FORCE_INLINE constexpr Timestamp operator*(const uint64 scalar) const
+		{
+			return Timestamp{m_time * scalar};
+		}
+		[[nodiscard]] FORCE_INLINE constexpr Timestamp operator/(const uint64 scalar) const
+		{
+			return Timestamp{m_time / scalar};
 		}
 
 		[[nodiscard]] FORCE_INLINE constexpr operator DurationType() const

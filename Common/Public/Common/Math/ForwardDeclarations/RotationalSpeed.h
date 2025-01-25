@@ -6,4 +6,5 @@ namespace ngine::Math
 	struct TRotationalSpeed;
 
 	using RotationalSpeedf = TRotationalSpeed<float>;
+	using RotationalSpeedd = TRotationalSpeed<double>;
 }
