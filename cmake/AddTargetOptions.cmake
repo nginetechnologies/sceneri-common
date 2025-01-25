@@ -129,7 +129,7 @@ function(AddTargetOptions target)
 		target_link_options(${target} PRIVATE /WX)
 
 		# Enable fast floating-point precision math
-		target_compile_options(${target} PRIVATE /fp:fast)
+		target_compile_options(${target} PRIVATE /fp:precise)
 		# Use vector calling convention
 		target_compile_options(${target} PRIVATE /Gv)
 
@@ -362,6 +362,11 @@ function(AddTargetOptions target)
 		)
 		target_compile_definitions(${target} PRIVATE _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING=1 __clang__=1)
 
+		target_compile_options(${target} PRIVATE $<$<OR:$<COMPILE_LANGUAGE:CXX>,$<COMPILE_LANGUAGE:OBJCXX>>:-ffp-model=precise -ffp-contract=off>)
+		if (PLATFORM_EMSCRIPTEN)
+			target_compile_options(${target} PRIVATE -Wno-overriding-option)
+		endif()
+		
 		set_target_properties(${target} PROPERTIES C_VISIBILITY_PRESET hidden)
 		set_target_properties(${target} PROPERTIES CXX_VISIBILITY_PRESET hidden)
 		set_target_properties(${target} PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
@@ -522,6 +527,8 @@ function(AddTargetOptions target)
 
 		# Make sure the 128 bit compare exchange instruction is available
 		target_compile_options(${target} PRIVATE $<$<OR:$<COMPILE_LANGUAGE:CXX>,$<COMPILE_LANGUAGE:OBJCXX>>:-mcx16>)
+
+		target_compile_options(${target} PRIVATE -ffp-contract=off)
 
 		target_compile_options(${target} PRIVATE
 			$<$<CONFIG:Debug>:-O0>
