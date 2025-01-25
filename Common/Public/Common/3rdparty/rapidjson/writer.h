@@ -336,10 +336,21 @@ protected:
         }
 
         char buffer[25];
-		auto result = fmt::format_to_n(buffer, 25 - 1, FMT_STRING("{:.{}f}"), d, maxDecimalPlaces_);
-		// Null-terminate the buffer (safe because we passed sizeof(buffer)-1 above)
-		*result.out = '\0';
-		char* end = result.out;
+        char* end;
+        if (std::floor(d) != d)
+        {
+			auto result = fmt::format_to_n(buffer, 25 - 1, FMT_STRING("{:.{}g}"), d, maxDecimalPlaces_);
+			// Null-terminate the buffer (safe because we passed sizeof(buffer)-1 above)
+			*result.out = '\0';
+			end = result.out;
+		}
+		else
+		{
+			auto result = fmt::format_to_n(buffer, 25 - 1, FMT_STRING("{}"), (std::int64_t)d);
+			// Null-terminate the buffer (safe because we passed sizeof(buffer)-1 above)
+			*result.out = '\0';
+			end = result.out;
+		}
 
         PutReserve(*os_, static_cast<size_t>(end - buffer));
         for (char* p = buffer; p != end; ++p)
@@ -534,10 +545,21 @@ inline bool Writer<StringBuffer>::WriteDouble(double d) {
     }
     
     char *buffer = os_->Push(25);
-    auto result = fmt::format_to_n(buffer, 25 - 1, FMT_STRING("{:.{}f}"), d, maxDecimalPlaces_);
-	// Null-terminate the buffer (safe because we passed sizeof(buffer)-1 above)
-	*result.out = '\0';
-	char* end = result.out;
+    char* end;
+	if (std::floor(d) != d)
+	{
+		auto result = fmt::format_to_n(buffer, 25 - 1, FMT_STRING("{:.{}g}"), d, maxDecimalPlaces_);
+		// Null-terminate the buffer (safe because we passed sizeof(buffer)-1 above)
+		*result.out = '\0';
+		end = result.out;
+	}
+	else
+	{
+		auto result = fmt::format_to_n(buffer, 25 - 1, FMT_STRING("{}"), (std::int64_t)d);
+		// Null-terminate the buffer (safe because we passed sizeof(buffer)-1 above)
+		*result.out = '\0';
+		end = result.out;
+	}
     os_->Pop(static_cast<size_t>(25 - (end - buffer)));
     return true;
 }
