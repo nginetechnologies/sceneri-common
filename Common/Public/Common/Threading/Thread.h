@@ -386,12 +386,16 @@ namespace ngine::Threading
 	{
 		void Start(const ConstNativeStringView name)
 		{
-			Thread::Start(&ThreadWithRunMember::RunInternal, *this, FlatNativeString<48>(name));
+			m_name = name;
+			Thread::Start(&ThreadWithRunMember::RunInternal, *this);
 		}
 
-		void RunInternal(const FlatNativeString<48> name)
+		void RunInternal()
 		{
-			SetThreadName(name.GetZeroTerminated());
+			{
+				const FlatNativeString<48>& name{m_name};
+				SetThreadName(name.GetZeroTerminated());
+			}
 
 			static_cast<JobType*>(this)->Run();
 		}
@@ -408,5 +412,7 @@ namespace ngine::Threading
 		using Thread::GetThreadId;
 		using Thread::SetAffinityMask;
 		using Thread::IsRunningOnThread;
+	protected:
+		FlatNativeString<48> m_name;
 	};
 }
