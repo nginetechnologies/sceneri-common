@@ -45,6 +45,10 @@ namespace ngine
 
 		UniqueRef& operator=(UniqueRef&& other) noexcept
 		{
+			if (m_pElement != nullptr)
+			{
+				delete m_pElement;
+			}
 			m_pElement = other.ReleaseOwnership();
 			return *this;
 		}
@@ -64,6 +68,10 @@ namespace ngine
 			typename = EnableIf<TypeTraits::IsBaseOf<ElementType, DerivedType>>>
 		UniqueRef& operator=(UniqueRef<DerivedType>&& other) noexcept
 		{
+			if (m_pElement != nullptr)
+			{
+				delete m_pElement;
+			}
 			m_pElement = static_cast<ContainedType*>(other.ReleaseOwnership());
 			return *this;
 		}

@@ -60,7 +60,7 @@ namespace ngine
 				}
 			}
 
-			ReferenceCountType m_referenceCount = 1;
+			ReferenceCountType m_referenceCount{1};
 		};
 	public:
 		SharedPtr() = default;
@@ -72,21 +72,33 @@ namespace ngine
 				m_pElement->AcquireReference();
 			}
 		}
-		void Swap(SharedPtr& other) noexcept
+		SharedPtr& operator=(const SharedPtr& other) noexcept
 		{
-			TrackedContainedType* pTmp = m_pElement;
+			if (m_pElement != nullptr)
+			{
+				m_pElement->ReleaseReference();
+			}
 			m_pElement = other.m_pElement;
-			other.m_pElement = pTmp;
-		}
-		SharedPtr& operator=(SharedPtr other) noexcept
-		{
-			Swap(other);
+			if (m_pElement != nullptr)
+			{
+				m_pElement->AcquireReference();
+			}
 			return *this;
 		}
 		SharedPtr(SharedPtr&& other) noexcept
 			: m_pElement(other.m_pElement)
 		{
 			other.m_pElement = nullptr;
+		}
+		SharedPtr& operator=(SharedPtr&& other) noexcept
+		{
+			if (m_pElement != nullptr)
+			{
+				m_pElement->ReleaseReference();
+			}
+			m_pElement = other.m_pElement;
+			other.m_pElement = nullptr;
+			return *this;
 		}
 		~SharedPtr() noexcept
 		{
@@ -120,16 +132,6 @@ namespace ngine
 		[[nodiscard]] operator bool() const noexcept
 		{
 			return m_pElement != nullptr;
-		}
-
-		//! Resets the reference to the managed object, and returns the reference count before the change
-		[[nodiscard]] size FetchReset() noexcept
-		{
-			if (m_pElement != nullptr)
-			{
-				return m_pElement->ReleaseReference();
-			}
-			return 0;
 		}
 	protected:
 		SharedPtr(TrackedContainedType* pTrackedType) noexcept

@@ -42,7 +42,10 @@ namespace ngine
 		}
 		CopyablePtr& operator=(const CopyablePtr& other)
 		{
-			DestroyElement();
+			if (m_pElement != nullptr)
+			{
+				delete m_pElement;
+			}
 			Expect(other.m_pElement != nullptr);
 			m_pElement = new ContainedType(*other.m_pElement);
 			return *this;
@@ -55,6 +58,10 @@ namespace ngine
 
 		CopyablePtr& operator=(CopyablePtr&& other) noexcept
 		{
+			if (m_pElement != nullptr)
+			{
+				delete m_pElement;
+			}
 			m_pElement = other.ReleaseOwnership();
 			return *this;
 		}
@@ -74,6 +81,10 @@ namespace ngine
 			typename = EnableIf<TypeTraits::IsBaseOf<ElementType, DerivedType>>>
 		CopyablePtr& operator=(CopyablePtr<DerivedType>&& other) noexcept
 		{
+			if (m_pElement != nullptr)
+			{
+				delete m_pElement;
+			}
 			m_pElement = static_cast<ContainedType*>(other.ReleaseOwnership());
 			return *this;
 		}
