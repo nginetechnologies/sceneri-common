@@ -7,6 +7,7 @@
 #include <Common/TypeTraits/Select.h>
 #include <Common/TypeTraits/IsEnum.h>
 #include <Common/Memory/AddressOf.h>
+#include <Common/Memory/GetAlignment.h>
 #include <Common/Platform/TrivialABI.h>
 
 namespace ngine
@@ -74,6 +75,11 @@ namespace ngine
 		using BaseType::OneInitialize;
 		using BaseType::ZeroInitialize;
 		using BaseType::GetIteratorIndex;
+
+		[[nodiscard]] FORCE_INLINE PURE_STATICS size GetAlignment() const
+		{
+			return Memory::GetAlignment(GetData());
+		}
 
 		TByteView& operator+=(const SizeType offset)
 		{
