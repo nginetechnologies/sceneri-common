@@ -285,7 +285,7 @@ function(AddTargetOptions target)
 
 	elseif(COMPILER_CLANG)
 		# Enable debug symbols in all builds
-		target_compile_options(${target} PRIVATE -g)
+		target_compile_options(${target} PRIVATE -g -gsplit-dwarf)
 
 		target_compile_options(${target} PRIVATE $<$<OR:$<COMPILE_LANGUAGE:C>,$<COMPILE_LANGUAGE:CXX>,$<COMPILE_LANGUAGE:OBJCXX>>:
 			-Weverything 
@@ -495,7 +495,7 @@ function(AddTargetOptions target)
 		endif()
 	elseif(COMPILER_GCC)
 		# Enable debug symbols in all builds
-		target_compile_options(${target} PRIVATE -g)
+		target_compile_options(${target} PRIVATE -g -gsplit-dwarf)
 
 		target_compile_options(${target} PRIVATE $<$<OR:$<COMPILE_LANGUAGE:CXX>,$<COMPILE_LANGUAGE:OBJCXX>>:
 			-Wall 
