@@ -6,42 +6,24 @@ namespace ngine
 {
 	namespace Internal
 	{
-		template<typename ObjectType, typename Function, size Index, typename... ArgumentTypes>
-		struct CallMemberFunctionWithTuple
+		template<typename ObjectType, typename Function, typename TupleType, typename TupleType::SizeType... Is>
+		FORCE_INLINE auto
+		CallMemberFunctionWithTuple(ObjectType& object, Function&& f, TupleType&& t, TypeTraits::IntegerSequence<typename TupleType::SizeType, Is...>)
 		{
-			template<typename... Vs>
-			FORCE_INLINE static auto Apply(ObjectType& object, Function&& f, Tuple<ArgumentTypes...>&& t, Vs&&... args) noexcept -> decltype(auto)
-			{
-				using TupleType = Tuple<ArgumentTypes...>;
-				using ElementType = typename TupleType::template ElementType<Index - 1>;
-				return CallMemberFunctionWithTuple<ObjectType, Function, Index - 1, ArgumentTypes...>::Apply(
-					object,
-					Forward<Function>(f),
-					Forward<TupleType>(t),
-					static_cast<ElementType>(t.template Get<Index - 1>()),
-					Forward<Vs>(args)...
-				);
-			}
-		};
-
-		template<typename ObjectType, typename Function, typename... ArgumentTypes>
-		struct CallMemberFunctionWithTuple<ObjectType, Function, 0, ArgumentTypes...>
-		{
-			template<typename... Vs>
-			FORCE_INLINE static auto Apply(ObjectType& object, Function&& f, Tuple<ArgumentTypes...>&&, Vs&&... args) noexcept -> decltype(auto)
-			{
-				return (object.*Forward<Function>(f))(Forward<Vs>(args)...);
-			};
-		};
+			return (object.*Forward<Function>(f))(Move(t.template Get<Is>())...);
+		}
 	}
 
 	template<typename ObjectType, typename Function, typename... ArgumentTypes>
-	FORCE_INLINE auto CallMemberFunctionWithTuple(ObjectType& object, Function&& f, Tuple<ArgumentTypes...>&& t) noexcept -> decltype(auto)
+	FORCE_INLINE auto CallMemberFunctionWithTuple(ObjectType& object, Function&& f, Tuple<ArgumentTypes...>&& t)
 	{
-		return Internal::CallMemberFunctionWithTuple<ObjectType, Function, sizeof...(ArgumentTypes), ArgumentTypes...>::Apply(
+		using TupleType = Tuple<ArgumentTypes...>;
+		using IndexSequence = typename TupleType::IndexSequence;
+		return Internal::CallMemberFunctionWithTuple<ObjectType, Function, TupleType>(
 			object,
 			Forward<Function>(f),
-			Forward<Tuple<ArgumentTypes...>>(t)
+			Forward<Tuple<ArgumentTypes...>>(t),
+			IndexSequence{}
 		);
 	}
 }

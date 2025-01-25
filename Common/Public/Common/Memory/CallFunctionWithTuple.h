@@ -6,40 +6,18 @@ namespace ngine
 {
 	namespace Internal
 	{
-		template<typename Function, size Index, typename... ArgumentTypes>
-		struct CallFunctionWithTuple
+		template<typename Function, typename TupleType, typename TupleType::SizeType... Is>
+		FORCE_INLINE auto CallFunctionWithTuple(Function&& f, TupleType&& t, TypeTraits::IntegerSequence<typename TupleType::SizeType, Is...>)
 		{
-			template<typename... Vs>
-			FORCE_INLINE static auto Apply(Function&& f, Tuple<ArgumentTypes...>&& t, Vs&&... args) noexcept -> decltype(auto)
-			{
-				using TupleType = Tuple<ArgumentTypes...>;
-				using ElementType = typename TupleType::template ElementType<Index - 1>;
-				return CallFunctionWithTuple<Function, Index - 1, ArgumentTypes...>::Apply(
-					Forward<Function>(f),
-					Forward<TupleType>(t),
-					static_cast<ElementType>(t.template Get<Index - 1>()),
-					Forward<Vs>(args)...
-				);
-			}
-		};
-
-		template<typename Function, typename... ArgumentTypes>
-		struct CallFunctionWithTuple<Function, 0, ArgumentTypes...>
-		{
-			template<typename... Vs>
-			FORCE_INLINE static auto Apply(Function&& f, Tuple<ArgumentTypes...>&&, Vs&&... args) noexcept -> decltype(auto)
-			{
-				return Forward<Function>(f)(Forward<Vs>(args)...);
-			};
-		};
+			return (Forward<Function>(f))(Move(t.template Get<Is>())...);
+		}
 	}
 
 	template<typename Function, typename... ArgumentTypes>
-	FORCE_INLINE auto CallFunctionWithTuple(Function&& f, Tuple<ArgumentTypes...>&& t) noexcept -> decltype(auto)
+	FORCE_INLINE auto CallFunctionWithTuple(Function&& f, Tuple<ArgumentTypes...>&& t)
 	{
-		return Internal::CallFunctionWithTuple<Function, sizeof...(ArgumentTypes), ArgumentTypes...>::Apply(
-			Forward<Function>(f),
-			Forward<Tuple<ArgumentTypes...>>(t)
-		);
+		using TupleType = Tuple<ArgumentTypes...>;
+		using IndexSequence = typename TupleType::IndexSequence;
+		return Internal::CallFunctionWithTuple<Function, TupleType>(Forward<Function>(f), Forward<Tuple<ArgumentTypes...>>(t), IndexSequence{});
 	}
 }
