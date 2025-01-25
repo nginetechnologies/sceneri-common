@@ -100,7 +100,7 @@ namespace ngine::Time
 		}
 		[[nodiscard]] FORCE_INLINE constexpr Duration operator/(const UnitType scalar) const
 		{
-			return Duration{m_value * scalar};
+			return Duration{m_value / scalar};
 		}
 
 		[[nodiscard]] FORCE_INLINE constexpr Duration operator-() const
