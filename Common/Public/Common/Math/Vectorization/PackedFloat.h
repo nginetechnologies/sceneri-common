@@ -1,14 +1,17 @@
 #pragma once
 
-#include <Common/Memory/Containers/FixedArrayView.h>
+#include <Common/Memory/Containers/Array.h>
 #include <Common/Math/Sqrt.h>
 
 #if USE_WASM_SIMD128
 #include <wasm_simd128.h>
 #endif
 
+#define USE_DETERMINISTIC_MATH 1
+
 namespace ngine::Math::Vectorization
 {
+#if USE_WASM_SIMD128 || USE_SSE || USE_NEON
 	template<>
 	struct TRIVIAL_ABI Packed<float, 2> : public
 #if USE_WASM_SIMD128
@@ -17,6 +20,8 @@ namespace ngine::Math::Vectorization
 																				PackedBase<float, __m64, 2>
 #elif USE_NEON
 																				PackedBase<float, float32x2_t, 2>
+#else
+																				PackedBase<float, Array<float, 2>, 2>
 #endif
 	{
 		inline static constexpr bool IsVectorized = false;
@@ -27,10 +32,14 @@ namespace ngine::Math::Vectorization
 		using BaseType = PackedBase<float, __m64, 2>;
 #elif USE_NEON
 		using BaseType = PackedBase<float, float32x2_t, 2>;
+#else
+		using BaseType = PackedBase<float, Array<float, 2>, 2>;
 #endif
 		using BaseType::BaseType;
 	};
+#endif
 
+#if USE_WASM_SIMD128 || USE_SSE || USE_NEON
 	template<>
 	struct TRIVIAL_ABI Packed<float, 4> : public
 #if USE_WASM_SIMD128
@@ -39,6 +48,8 @@ namespace ngine::Math::Vectorization
 																				PackedBase<float, __m128, 4>
 #elif USE_NEON
 																				PackedBase<float, float32x4_t, 4>
+#else
+																				PackedBase<float, Array<float, 4>, 4>
 #endif
 	{
 		inline static constexpr bool IsVectorized = USE_SSE || USE_NEON || USE_WASM_SIMD128;
@@ -49,6 +60,8 @@ namespace ngine::Math::Vectorization
 		using BaseType = PackedBase<float, __m128, 4>;
 #elif USE_NEON
 		using BaseType = PackedBase<float, float32x4_t, 4>;
+#else
+		using BaseType = PackedBase<float, Array<float, 4>, 4>;
 #endif
 
 		using BaseType::BaseType;
@@ -60,6 +73,8 @@ namespace ngine::Math::Vectorization
 					_mm_set_ps1(value)
 #elif USE_NEON
 					float32x4_t{0.f, 0.f, 0.f, value}
+#else
+					Array<float, 4>{0.f, 0.f, 0.f, value}
 #endif
 				)
 		{
@@ -72,6 +87,8 @@ namespace ngine::Math::Vectorization
 					_mm_set_ss(value)
 #elif USE_NEON
 					vdupq_n_f32(value)
+#else
+					Array<float, 4>{value, value, value, value}
 #endif
 				)
 		{
@@ -84,6 +101,8 @@ namespace ngine::Math::Vectorization
 					0.f
 #elif USE_NEON
 					vdupq_n_f32(0.f)
+#else
+					Array<float, 4>{0.f, 0.f, 0.f, 0.f}
 #endif
 				)
 		{
@@ -96,6 +115,8 @@ namespace ngine::Math::Vectorization
 					_mm_set_ps(value0, value1, value2, value3)
 #elif USE_NEON
 					float32x4_t{value3, value2, value1, value0}
+#else
+					Array<float, 4>{value0, value1, value2, value3}
 #endif
 				)
 		{
@@ -109,6 +130,8 @@ namespace ngine::Math::Vectorization
 			_mm_store_ss(&out, m_value);
 #elif USE_NEON
 			out = vgetq_lane_f32(m_value, 0);
+#else
+			out = m_value[3];
 #endif
 		}
 
@@ -120,6 +143,8 @@ namespace ngine::Math::Vectorization
 			return _mm_cvtss_f32(m_value);
 #elif USE_NEON
 			return vgetq_lane_f32(m_value, 0);
+#else
+			return m_value[3];
 #endif
 		}
 
@@ -131,18 +156,37 @@ namespace ngine::Math::Vectorization
 			_mm_store_ps(out.GetData(), m_value);
 #elif USE_NEON
 			vst1q_f32(out.GetData(), m_value);
+#else
+			m_value = out;
 #endif
 		}
 
 		[[nodiscard]] FORCE_INLINE Packed operator-() const noexcept
 		{
+			if constexpr (USE_DETERMINISTIC_MATH)
+			{
 #if USE_WASM_SIMD128
-			return wasm_f32x4_neg(m_value);
+				return wasm_f32x4_sub(wasm_f32x4_const_splat(0.f), m_value);
 #elif USE_SSE
-			return _mm_xor_ps(m_value, _mm_set1_ps(-0.0));
+				return _mm_sub_ps(_mm_setzero_ps(), m_value);
 #elif USE_NEON
-			return vmulq_n_f32(m_value, -1.0f);
+				return vsubq_f32(vdupq_n_f32(0), m_value);
+#else
+				return Packed{0.f - m_value[0], 0.f - m_value[1], 0.f - m_value[2], 0.f - m_value[3]};
 #endif
+			}
+			else
+			{
+#if USE_WASM_SIMD128
+				return wasm_f32x4_neg(m_value);
+#elif USE_SSE
+				return _mm_xor_ps(m_value, _mm_set1_ps(-0.0));
+#elif USE_NEON
+				return vmulq_n_f32(m_value, -1.0f);
+#else
+				return Packed{-m_value[0], -m_value[1], -m_value[2], -m_value[3]};
+#endif
+			}
 		}
 		[[nodiscard]] FORCE_INLINE Packed operator+(const Packed other) const noexcept
 		{
@@ -152,6 +196,13 @@ namespace ngine::Math::Vectorization
 			return _mm_add_ps(m_value, other);
 #elif USE_NEON
 			return vaddq_f32(m_value, other.m_value);
+#else
+			return Packed{
+				m_value[0] + other.m_value[0],
+				m_value[1] + other.m_value[1],
+				m_value[2] + other.m_value[2],
+				m_value[3] + other.m_value[3]
+			};
 #endif
 		}
 		[[nodiscard]] FORCE_INLINE Packed& operator+=(const Packed other) noexcept
@@ -182,6 +233,13 @@ namespace ngine::Math::Vectorization
 			return _mm_mul_ps(m_value, other);
 #elif USE_NEON
 			return vmulq_f32(m_value, other.m_value);
+#else
+			return Packed{
+				m_value[0] * other.m_value[0],
+				m_value[1] * other.m_value[1],
+				m_value[2] * other.m_value[2],
+				m_value[3] * other.m_value[3]
+			};
 #endif
 		}
 		[[nodiscard]] FORCE_INLINE Packed& operator*=(const Packed other) noexcept
@@ -197,6 +255,13 @@ namespace ngine::Math::Vectorization
 			return _mm_div_ps(m_value, other);
 #elif USE_NEON
 			return vdivq_f32(m_value, other.m_value);
+#else
+			return Packed{
+				m_value[0] / other.m_value[0],
+				m_value[1] / other.m_value[1],
+				m_value[2] / other.m_value[2],
+				m_value[3] / other.m_value[3]
+			};
 #endif
 		}
 		[[nodiscard]] FORCE_INLINE Packed& operator/=(const Packed other) noexcept
@@ -213,6 +278,13 @@ namespace ngine::Math::Vectorization
 			return _mm_cmpeq_ps(m_value, other.m_value);
 #elif USE_NEON
 			return vceqq_f32(m_value, other.m_value);
+#else
+			return Packed{
+				UnitType(m_value[0] == other.m_value[0]),
+				UnitType(m_value[1] == other.m_value[1]),
+				UnitType(m_value[2] == other.m_value[2]),
+				UnitType(m_value[3] == other.m_value[3])
+			};
 #endif
 		}
 		[[nodiscard]] FORCE_INLINE Packed operator!=(const Packed other) const noexcept
@@ -223,6 +295,13 @@ namespace ngine::Math::Vectorization
 			return _mm_cmpneq_ps(m_value, other.m_value);
 #elif USE_NEON
 			return vmvnq_u32(vceqq_f32(m_value, other.m_value));
+#else
+			return Packed{
+				UnitType(m_value[0] != other.m_value[0]),
+				UnitType(m_value[1] != other.m_value[1]),
+				UnitType(m_value[2] != other.m_value[2]),
+				UnitType(m_value[3] != other.m_value[3])
+			};
 #endif
 		}
 
@@ -234,6 +313,13 @@ namespace ngine::Math::Vectorization
 			return _mm_cmpgt_ps(m_value, other);
 #elif USE_NEON
 			return vcgtq_f32(m_value, other.m_value);
+#else
+			return Packed{
+				UnitType(m_value[0] > other.m_value[0]),
+				UnitType(m_value[1] > other.m_value[1]),
+				UnitType(m_value[2] > other.m_value[2]),
+				UnitType(m_value[3] > other.m_value[3])
+			};
 #endif
 		}
 		[[nodiscard]] FORCE_INLINE Packed operator>=(const Packed other) const noexcept
@@ -244,6 +330,13 @@ namespace ngine::Math::Vectorization
 			return _mm_cmpge_ps(m_value, other);
 #elif USE_NEON
 			return vcgeq_f32(m_value, other.m_value);
+#else
+			return Packed{
+				UnitType(m_value[0] >= other.m_value[0]),
+				UnitType(m_value[1] >= other.m_value[1]),
+				UnitType(m_value[2] >= other.m_value[2]),
+				UnitType(m_value[3] >= other.m_value[3])
+			};
 #endif
 		}
 		[[nodiscard]] FORCE_INLINE Packed operator<(const Packed other) const noexcept
@@ -254,6 +347,13 @@ namespace ngine::Math::Vectorization
 			return _mm_cmplt_ps(m_value, other);
 #elif USE_NEON
 			return vcltq_f32(m_value, other.m_value);
+#else
+			return Packed{
+				UnitType(m_value[0] < other.m_value[0]),
+				UnitType(m_value[1] < other.m_value[1]),
+				UnitType(m_value[2] < other.m_value[2]),
+				UnitType(m_value[3] < other.m_value[3])
+			};
 #endif
 		}
 		[[nodiscard]] FORCE_INLINE Packed operator<=(const Packed other) const noexcept
@@ -264,6 +364,13 @@ namespace ngine::Math::Vectorization
 			return _mm_cmple_ps(m_value, other);
 #elif USE_NEON
 			return vcleq_f32(m_value, other.m_value);
+#else
+			return Packed{
+				UnitType(m_value[0] <= other.m_value[0]),
+				UnitType(m_value[1] <= other.m_value[1]),
+				UnitType(m_value[2] <= other.m_value[2]),
+				UnitType(m_value[3] <= other.m_value[3])
+			};
 #endif
 		}
 		[[nodiscard]] FORCE_INLINE Packed operator&(const Packed other) const noexcept
@@ -274,6 +381,13 @@ namespace ngine::Math::Vectorization
 			return _mm_and_ps(m_value, other);
 #elif USE_NEON
 			return vandq_s32(m_value, other.m_value);
+#else
+			return Packed{
+				UnitType((uint32)m_value[0] & (uint32)other.m_value[0]),
+				UnitType((uint32)m_value[1] & (uint32)other.m_value[1]),
+				UnitType((uint32)m_value[2] & (uint32)other.m_value[2]),
+				UnitType((uint32)m_value[3] & (uint32)other.m_value[3])
+			};
 #endif
 		}
 		[[nodiscard]] FORCE_INLINE Packed operator|(const Packed other) const noexcept
@@ -284,6 +398,13 @@ namespace ngine::Math::Vectorization
 			return _mm_or_ps(m_value, other);
 #elif USE_NEON
 			return vorrq_s32(m_value, other.m_value);
+#else
+			return Packed{
+				UnitType((uint32)m_value[0] | (uint32)other.m_value[0]),
+				UnitType((uint32)m_value[1] | (uint32)other.m_value[1]),
+				UnitType((uint32)m_value[2] | (uint32)other.m_value[2]),
+				UnitType((uint32)m_value[3] | (uint32)other.m_value[3])
+			};
 #endif
 		}
 		[[nodiscard]] FORCE_INLINE Packed operator^(const Packed other) const noexcept
@@ -294,6 +415,13 @@ namespace ngine::Math::Vectorization
 			return _mm_xor_ps(m_value, other);
 #elif USE_NEON
 			return veorq_s32(m_value, other.m_value);
+#else
+			return Packed{
+				UnitType((uint32)m_value[0] ^ (uint32)other.m_value[0]),
+				UnitType((uint32)m_value[1] ^ (uint32)other.m_value[1]),
+				UnitType((uint32)m_value[2] ^ (uint32)other.m_value[2]),
+				UnitType((uint32)m_value[3] ^ (uint32)other.m_value[3])
+			};
 #endif
 		}
 		[[nodiscard]] FORCE_INLINE Packed operator~() const noexcept
@@ -537,6 +665,7 @@ namespace ngine::Math::Vectorization
 			return Swizzle<1, 2, 0, 3>();
 		}
 	};
+#endif
 
 #if USE_AVX
 	template<>

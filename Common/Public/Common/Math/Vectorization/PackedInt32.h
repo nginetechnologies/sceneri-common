@@ -8,6 +8,7 @@
 
 namespace ngine::Math::Vectorization
 {
+#if USE_WASM_SIMD128 || USE_SSE || USE_NEON
 	template<>
 	struct TRIVIAL_ABI Packed<uint32, 2> : public
 #if USE_WASM_SIMD128
@@ -51,7 +52,9 @@ namespace ngine::Math::Vectorization
 #endif
 		using BaseType::BaseType;
 	};
+#endif
 
+#if USE_WASM_SIMD128 || USE_SSE || USE_NEON
 	template<>
 	struct TRIVIAL_ABI Packed<uint32, 4> : public
 #if USE_WASM_SIMD128
@@ -486,6 +489,7 @@ namespace ngine::Math::Vectorization
 #endif
 		}
 	};
+#endif
 
 #if USE_AVX
 	template<>
