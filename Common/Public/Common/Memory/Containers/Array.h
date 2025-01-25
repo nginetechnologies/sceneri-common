@@ -37,13 +37,19 @@ namespace ngine
 		using PointerType = typename View::PointerType;
 		using ConstPointerType = typename View::ConstPointerType;
 		using ReferenceType = typename View::ReferenceType;
-		using iterator = typename View::iterator;
-		using const_iterator = typename View::const_iterator;
 		using IteratorType = typename View::IteratorType;
+		using ReverseIteratorType = typename View::ReverseIteratorType;
 		using ConstIteratorType = typename View::ConstIteratorType;
+		using ConstReverseIteratorType = typename View::ConstReverseIteratorType;
+		using iterator = typename View::iterator;
+		using reverse_iterator = typename View::reverse_iterator;
+		using const_iterator = typename View::const_iterator;
+		using const_reverse_iterator = typename View::const_reverse_iterator;
 
 		using OptionalIteratorType = typename View::OptionalIteratorType;
+		using OptionalReverseIteratorType = typename View::OptionalReverseIteratorType;
 		using OptionalConstIteratorType = typename View::OptionalConstIteratorType;
+		using OptionalConstReverseIteratorType = typename View::OptionalConstReverseIteratorType;
 
 		constexpr Array() = default;
 
@@ -183,21 +189,38 @@ namespace ngine
 			return m_data[(SizeType)index];
 		}
 
-		[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr PointerType begin() noexcept LIFETIME_BOUND
+		[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr IteratorType begin() noexcept LIFETIME_BOUND
 		{
 			return Memory::GetAddressOf(m_data[0]);
 		}
-		[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr ConstPointerType begin() const noexcept LIFETIME_BOUND
+		[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr ConstIteratorType begin() const noexcept LIFETIME_BOUND
 		{
 			return Memory::GetAddressOf(m_data[0]);
 		}
-		[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr PointerType end() noexcept LIFETIME_BOUND
+		[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr IteratorType end() noexcept LIFETIME_BOUND
 		{
 			return begin() + Size;
 		}
-		[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr ConstPointerType end() const noexcept LIFETIME_BOUND
+		[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr ConstIteratorType end() const noexcept LIFETIME_BOUND
 		{
 			return begin() + Size;
+		}
+
+		[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr ReverseIteratorType rbegin() noexcept LIFETIME_BOUND
+		{
+			return GetData() + Size - 1;
+		}
+		[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr ConstReverseIteratorType rbegin() const noexcept LIFETIME_BOUND
+		{
+			return GetData() + Size - 1;
+		}
+		[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr ReverseIteratorType rend() noexcept LIFETIME_BOUND
+		{
+			return GetData() - 1;
+		}
+		[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr ConstReverseIteratorType rend() const noexcept LIFETIME_BOUND
+		{
+			return GetData() - 1;
 		}
 
 		[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr bool IsValidIndex(const IndexType index) const noexcept

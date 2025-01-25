@@ -171,8 +171,8 @@ operator=(const FixedArrayView<OtherElementType, Size, OtherIndexType, OtherSize
 		}
 		[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr IndexType GetIteratorIndex(const ConstPointerType it) const noexcept
 		{
-			Assert((it >= begin()) & (it <= end()));
-			return static_cast<IndexType>(it - begin());
+			Assert((it >= begin().Get()) & (it <= end().Get()));
+			return static_cast<IndexType>(it - begin().Get());
 		}
 
 		[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr operator DynamicView() const
