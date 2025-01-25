@@ -1019,7 +1019,7 @@ namespace ngine::IO
 			}
 		}
 
-		return TPathView();
+		return fileName;
 	}
 
 	template<typename CharType, uint8 Flags, CharType PathSeparator_, uint16 MaximumPathLength>
