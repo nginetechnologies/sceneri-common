@@ -366,7 +366,7 @@ namespace ngine::Math::Vectorization
 			wasm_v128_store(temp, product);
 			return Packed(temp[0] + temp[1] + temp[2]);
 #elif USE_SSE4_1
-			return _mm_dp_ps(m_value, other, 0b01110001);
+			return _mm_dp_ps(m_value, other, 0b01110111);
 #elif USE_NEON
 			float32x4_t mul = vmulq_f32(m_value, other.m_value);
 			mul = vsetq_lane_f32(0, mul, 3);
