@@ -68,6 +68,37 @@ namespace ngine
 	template<typename T>
 	template<typename... Args>
 	inline EnableIf<Serialization::Internal::CanWrite<T, Args...>, bool>
+	Optional<T, EnableIf<Memory::Sentinel<T>::Type != Memory::SentinelType::NotSupported>>::Serialize(
+		Serialization::Writer serializer, Args&... args
+	) const
+	{
+		if (IsInvalid())
+		{
+			return false;
+		}
+
+		return serializer.SerializeInPlace(Get(), args...);
+	}
+
+	template<typename T>
+	template<typename... Args>
+	inline EnableIf<Serialization::Internal::CanRead<T, Args...>, bool>
+	Optional<T, EnableIf<Memory::Sentinel<T>::Type != Memory::SentinelType::NotSupported>>::Serialize(
+		const Serialization::Reader serializer, Args&... args
+	)
+	{
+		T newValue;
+		if (serializer.SerializeInPlace(newValue, args...))
+		{
+			*this = Move(newValue);
+			return true;
+		}
+		return false;
+	}
+
+	template<typename T>
+	template<typename... Args>
+	inline EnableIf<Serialization::Internal::CanWrite<T, Args...>, bool>
 	Optional<T*>::Serialize(Serialization::Writer serializer, Args&... args) const
 	{
 		if (IsInvalid())

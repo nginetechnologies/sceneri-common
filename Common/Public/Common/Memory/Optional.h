@@ -23,6 +23,7 @@
 #include <Common/Memory/ForwardDeclarations/Optional.h>
 #include <Common/Memory/Invalid.h>
 #include <Common/Memory/New.h>
+#include <Common/Memory/Sentinel.h>
 #include <Common/Math/CoreNumericTypes.h>
 #include <Common/Platform/CompilerWarnings.h>
 #include <Common/Platform/TrivialABI.h>
@@ -565,182 +566,117 @@ namespace ngine
 		using BaseType::operator=;
 	};
 
-	namespace Internal
+	template<typename Type>
+	struct TRIVIAL_ABI Optional<Type, EnableIf<Memory::Sentinel<Type>::Type != Memory::SentinelType::NotSupported>>
 	{
-		template<typename Type, Type InvalidValue>
-		struct TRIVIAL_ABI OptionalWithSentinel
+		Optional() = default;
+		Optional(const Optional&) = default;
+		Optional(Optional&&) = default;
+		Optional& operator=(const Optional&) = default;
+		Optional& operator=(Optional&&) = default;
+		NO_DEBUG Optional(InvalidType)
 		{
-			OptionalWithSentinel() = default;
-			NO_DEBUG OptionalWithSentinel(InvalidType)
-			{
-			}
-			NO_DEBUG constexpr OptionalWithSentinel(const Type value)
-				: m_value(value)
-			{
-			}
-			NO_DEBUG OptionalWithSentinel(const Type value, const bool isValid)
-				: m_value(isValid ? value : InvalidValue)
-			{
-			}
-			NO_DEBUG constexpr OptionalWithSentinel& operator=(const Type value)
-			{
-				m_value = value;
-				return *this;
-			}
-
-			[[nodiscard]] NO_DEBUG FORCE_INLINE PURE_STATICS bool IsInvalid() const noexcept
-			{
-				return m_value == InvalidValue;
-			}
-			[[nodiscard]] NO_DEBUG FORCE_INLINE PURE_STATICS bool IsValid() const noexcept
-			{
-				return m_value != InvalidValue;
-			}
-
-			[[nodiscard]] NO_DEBUG FORCE_INLINE PURE_STATICS explicit operator bool() const noexcept
-			{
-				return IsValid();
-			}
-
-			[[nodiscard]] NO_DEBUG FORCE_INLINE PURE_STATICS constexpr const Type& Get() const
-			{
-				Assert(IsValid());
-				return m_value;
-			}
-			[[nodiscard]] NO_DEBUG FORCE_INLINE PURE_STATICS constexpr Type& Get()
-			{
-				Assert(IsValid());
-				return m_value;
-			}
-
-			[[nodiscard]] NO_DEBUG FORCE_INLINE PURE_STATICS constexpr const Type& operator*() const
-			{
-				Assert(IsValid());
-				return m_value;
-			}
-			[[nodiscard]] NO_DEBUG FORCE_INLINE PURE_STATICS constexpr Type& operator*()
-			{
-				Assert(IsValid());
-				return m_value;
-			}
-			[[nodiscard]] NO_DEBUG FORCE_INLINE PURE_STATICS Type& GetUnsafe() noexcept LIFETIME_BOUND
-			{
-				return m_value;
-			}
-			[[nodiscard]] NO_DEBUG FORCE_INLINE PURE_STATICS const Type& GetUnsafe() const noexcept LIFETIME_BOUND
-			{
-				return m_value;
-			}
-		protected:
-			NO_DEBUG PURE_STATICS static Type GetInvalidValue() noexcept;
-		protected:
-			Type m_value = InvalidValue;
-		};
-
-		// TODO: Replace with OptionalWithSentinel once we're C++20
-		template<typename Type>
-		struct TRIVIAL_ABI OptionalWithInvalidValue
+		}
+		NO_DEBUG constexpr Optional(const Type value)
+			: m_value(value)
 		{
-			OptionalWithInvalidValue() = default;
-			OptionalWithInvalidValue(const OptionalWithInvalidValue&) = default;
-			OptionalWithInvalidValue(OptionalWithInvalidValue&&) = default;
-			OptionalWithInvalidValue& operator=(const OptionalWithInvalidValue&) = default;
-			OptionalWithInvalidValue& operator=(OptionalWithInvalidValue&&) = default;
-			NO_DEBUG OptionalWithInvalidValue(InvalidType)
-			{
-			}
-			NO_DEBUG constexpr OptionalWithInvalidValue(const Type value)
-				: m_value(value)
-			{
-			}
-			NO_DEBUG OptionalWithInvalidValue(const Type value, const bool isValid)
-				: m_value(isValid ? value : GetInvalidValue())
-			{
-			}
-			NO_DEBUG constexpr OptionalWithInvalidValue& operator=(const Type value)
-			{
-				m_value = value;
-				return *this;
-			}
-			NO_DEBUG constexpr OptionalWithInvalidValue& operator=(const InvalidType)
-			{
-				m_value = GetInvalidValue();
-				return *this;
-			}
+		}
+		NO_DEBUG Optional(const Type value, const bool isValid)
+			: m_value(isValid ? value : GetInvalidValue())
+		{
+		}
+		NO_DEBUG constexpr Optional& operator=(const Type value)
+		{
+			m_value = value;
+			return *this;
+		}
+		NO_DEBUG constexpr Optional& operator=(const InvalidType)
+		{
+			m_value = GetInvalidValue();
+			return *this;
+		}
 
-			[[nodiscard]] NO_DEBUG FORCE_INLINE PURE_STATICS bool IsInvalid() const noexcept
-			{
-				static const Type invalid = GetInvalidValue();
-				return Memory::Compare(this, &invalid, sizeof(Type)) == 0;
-			}
-			[[nodiscard]] NO_DEBUG FORCE_INLINE PURE_STATICS bool IsValid() const noexcept
-			{
-				return !IsInvalid();
-			}
+		[[nodiscard]] NO_DEBUG FORCE_INLINE PURE_STATICS bool IsInvalid() const noexcept
+		{
+			static const Type invalid = GetInvalidValue();
+			return Memory::Compare(this, &invalid, sizeof(Type)) == 0;
+		}
+		[[nodiscard]] NO_DEBUG FORCE_INLINE PURE_STATICS bool IsValid() const noexcept
+		{
+			return !IsInvalid();
+		}
 
-			[[nodiscard]] NO_DEBUG FORCE_INLINE PURE_STATICS explicit operator bool() const noexcept
-			{
-				return IsValid();
-			}
+		[[nodiscard]] NO_DEBUG FORCE_INLINE PURE_STATICS explicit operator bool() const noexcept
+		{
+			return IsValid();
+		}
 
-			[[nodiscard]] NO_DEBUG FORCE_INLINE PURE_STATICS constexpr const Type& Get() const
-			{
-				Assert(IsValid());
-				return m_value;
-			}
-			[[nodiscard]] NO_DEBUG FORCE_INLINE PURE_STATICS constexpr Type& Get()
-			{
-				Assert(IsValid());
-				return m_value;
-			}
+		[[nodiscard]] NO_DEBUG FORCE_INLINE PURE_STATICS constexpr const Type& Get() const
+		{
+			Assert(IsValid());
+			return m_value;
+		}
+		[[nodiscard]] NO_DEBUG FORCE_INLINE PURE_STATICS constexpr Type& Get()
+		{
+			Assert(IsValid());
+			return m_value;
+		}
 
-			[[nodiscard]] NO_DEBUG FORCE_INLINE PURE_STATICS constexpr const Type& operator*() const
+		[[nodiscard]] NO_DEBUG FORCE_INLINE PURE_STATICS constexpr const Type& operator*() const
+		{
+			Assert(IsValid());
+			return m_value;
+		}
+		[[nodiscard]] NO_DEBUG FORCE_INLINE PURE_STATICS constexpr Type& operator*()
+		{
+			Assert(IsValid());
+			return m_value;
+		}
+		[[nodiscard]] NO_DEBUG FORCE_INLINE PURE_STATICS Type& GetUnsafe() noexcept LIFETIME_BOUND
+		{
+			return m_value;
+		}
+		[[nodiscard]] NO_DEBUG FORCE_INLINE PURE_STATICS const Type& GetUnsafe() const noexcept LIFETIME_BOUND
+		{
+			return m_value;
+		}
+
+		template<typename... Args>
+		EnableIf<Serialization::Internal::CanRead<Type, Args...>, bool> Serialize(const Serialization::Reader reader, Args&... args);
+		template<typename... Args>
+		EnableIf<Serialization::Internal::CanWrite<Type, Args...>, bool> Serialize(Serialization::Writer writer, Args&... args) const;
+	protected:
+		NO_DEBUG PURE_STATICS static Type GetInvalidValue() noexcept
+		{
+			if constexpr (Memory::Sentinel<Type>::Type == Memory::SentinelType::Static)
 			{
-				Assert(IsValid());
-				return m_value;
+				return Memory::Sentinel<Type>::Value;
 			}
-			[[nodiscard]] NO_DEBUG FORCE_INLINE PURE_STATICS constexpr Type& operator*()
+			else
 			{
-				Assert(IsValid());
-				return m_value;
+				return Memory::Sentinel<Type>::GetValue();
 			}
-			[[nodiscard]] NO_DEBUG FORCE_INLINE PURE_STATICS Type& GetUnsafe() noexcept LIFETIME_BOUND
-			{
-				return m_value;
-			}
-			[[nodiscard]] NO_DEBUG FORCE_INLINE PURE_STATICS const Type& GetUnsafe() const noexcept LIFETIME_BOUND
-			{
-				return m_value;
-			}
-		protected:
-			NO_DEBUG PURE_STATICS static Type GetInvalidValue() noexcept;
-		protected:
-			Type m_value = GetInvalidValue();
-		};
-	}
+		}
+	protected:
+		Type m_value = GetInvalidValue();
+	};
 
 #if !PLATFORM_WEB
-	template<>
-	struct TRIVIAL_ABI Optional<double> : public Internal::OptionalWithInvalidValue<double>
+	namespace Memory
 	{
-		using BaseType = Internal::OptionalWithInvalidValue<double>;
-		using BaseType::BaseType;
-		using BaseType::operator=;
-
-		bool Serialize(const Serialization::Reader reader);
-		bool Serialize(Serialization::Writer writer) const;
-	};
-
-	template<>
-	struct TRIVIAL_ABI Optional<float> : public Internal::OptionalWithInvalidValue<float>
-	{
-		using BaseType = Internal::OptionalWithInvalidValue<float>;
-		using BaseType::BaseType;
-		using BaseType::operator=;
-
-		bool Serialize(const Serialization::Reader reader);
-		bool Serialize(Serialization::Writer writer) const;
-	};
+		template<>
+		struct Sentinel<double>
+		{
+			inline static constexpr SentinelType Type = SentinelType::Dynamic;
+			[[nodiscard]] NO_DEBUG PURE_STATICS static double GetValue() noexcept;
+		};
+		template<>
+		struct Sentinel<float>
+		{
+			inline static constexpr SentinelType Type = SentinelType::Dynamic;
+			[[nodiscard]] NO_DEBUG PURE_STATICS static float GetValue() noexcept;
+		};
+	}
 #endif
 
 	template<>
