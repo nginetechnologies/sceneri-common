@@ -152,7 +152,7 @@ namespace ngine::Threading
 			Assert(result != EINVAL);
 			return result == 0;
 #elif USE_SHARED_SPINLOCK
-			if (m_mutex.LockExclusive())
+			if (m_mutex.TryLockExclusive())
 			{
 				int expectedState = m_state.Load();
 				if (expectedState != 0)
