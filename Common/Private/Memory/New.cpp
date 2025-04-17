@@ -4,8 +4,10 @@
 #include <cstdlib>
 #include <cstring>
 
-#define USE_MIMALLOC (!PLATFORM_APPLE)
+#define USE_MIMALLOC true
 #if USE_MIMALLOC
+#define MI_SECURE 4
+#define MI_DEBUG 1
 #include "Common/3rdparty/mimalloc/mimalloc.h"
 #elif PLATFORM_APPLE
 #include <malloc/malloc.h>
