@@ -2,7 +2,6 @@
 #include <Common/Serialization/Reader.h>
 #include <Common/Serialization/Writer.h>
 
-#include <Common/Memory/Optional.h>
 #include <Common/EnumFlags.h>
 
 namespace rapidjson
@@ -51,53 +50,5 @@ namespace ngine
 		template struct EnumFlagsBase<uint16>;
 		template struct EnumFlagsBase<uint32>;
 		template struct EnumFlagsBase<uint64>;
-	}
-
-#if !PLATFORM_WEB
-	bool Optional<float>::Serialize(Serialization::Writer serializer) const
-	{
-		if (!IsValid())
-		{
-			return false;
-		}
-
-		return serializer.SerializeInPlace(m_value);
-	}
-
-	bool Optional<float>::Serialize(const Serialization::Reader serializer)
-	{
-		return serializer.SerializeInPlace(m_value);
-	}
-
-	bool Optional<double>::Serialize(Serialization::Writer serializer) const
-	{
-		if (!IsValid())
-		{
-			return false;
-		}
-
-		return serializer.SerializeInPlace(m_value);
-	}
-
-	bool Optional<double>::Serialize(const Serialization::Reader serializer)
-	{
-		return serializer.SerializeInPlace(m_value);
-	}
-#endif
-
-	bool Optional<bool>::Serialize(Serialization::Writer serializer) const
-	{
-		return serializer.SerializeInPlace(GetValue());
-	}
-
-	bool Optional<bool>::Serialize(const Serialization::Reader serializer)
-	{
-		bool newValue{IsValid() ? GetValue() : false};
-		if (serializer.SerializeInPlace(newValue))
-		{
-			*this = newValue;
-			return true;
-		}
-		return false;
 	}
 }

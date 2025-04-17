@@ -7,6 +7,7 @@
 #include <Common/Math/Density.h>
 #include <Common/Math/Torque.h>
 #include <Common/Math/RotationalSpeed.h>
+#include <Common/Math/Frequency.h>
 #include <Common/Math/Speed.h>
 #include <Common/Math/Acceleration.h>
 #include <Common/Math/ClampedValue.h>
@@ -19,6 +20,24 @@
 
 namespace ngine::Math
 {
+	namespace Internal
+	{
+		char* Serialize(char* buffer, const size_t n, const double value, const int maxDecimalPlaces)
+		{
+			auto result = fmt::format_to_n(buffer, n, FMT_STRING("{:.{}g}"), value, maxDecimalPlaces);
+			// Null-terminate the buffer (safe because we passed sizeof(buffer)-1 above)
+			*result.out = '\0';
+			return result.out;
+		}
+		char* Serialize(char* buffer, const size_t n, const int64_t value)
+		{
+			auto result = fmt::format_to_n(buffer, n, FMT_STRING("{}"), value);
+			// Null-terminate the buffer (safe because we passed sizeof(buffer)-1 above)
+			*result.out = '\0';
+			return result.out;
+		}
+	}
+
 	template<typename T>
 	bool TRatio<T>::Serialize(const Serialization::Reader serializer)
 	{
@@ -120,6 +139,26 @@ namespace ngine::Math
 	template struct Torque<double>;
 
 	template<typename T>
+	inline bool TFrequency<T>::Serialize(const Serialization::Reader serializer)
+	{
+		const Serialization::Value& __restrict currentElement = serializer.GetValue();
+		Assert(currentElement.IsNumber());
+		*this = TFrequency<T>::FromHertz(static_cast<T>(currentElement.GetDouble()));
+		return true;
+	}
+
+	template<typename T>
+	inline bool TFrequency<T>::Serialize(Serialization::Writer serializer) const
+	{
+		Serialization::Value& __restrict currentElement = serializer.GetValue();
+		currentElement = Serialization::Value(GetHertz());
+		return true;
+	}
+
+	template struct TFrequency<float>;
+	template struct TFrequency<double>;
+
+	template<typename T>
 	inline bool TRotationalSpeed<T>::Serialize(const Serialization::Reader serializer)
 	{
 		const Serialization::Value& __restrict currentElement = serializer.GetValue();
@@ -137,6 +176,7 @@ namespace ngine::Math
 	}
 
 	template struct TRotationalSpeed<float>;
+	template struct TRotationalSpeed<double>;
 
 	template<typename T>
 	inline bool TSpeed<T>::Serialize(const Serialization::Reader serializer)

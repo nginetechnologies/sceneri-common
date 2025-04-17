@@ -15,14 +15,19 @@
 #ifndef RAPIDJSON_WRITER_H_
 #define RAPIDJSON_WRITER_H_
 
+namespace ngine::Math::Internal
+{
+    [[nodiscard]] char* Serialize(char* buffer, const size_t n, const double value, const int maxDecimalPlaces);
+    [[nodiscard]] char* Serialize(char* buffer, const size_t n, const int64_t value);
+}
+
 #include "stream.h"
 #include "internal/stack.h"
 #include "internal/strfunc.h"
 #include "internal/itoa.h"
 #include "stringbuffer.h"
 #include <new>      // placement new
-
-#include <Common/3rdparty/fmt/Include.h>
+#include <Common/Math/Floor.h>
 
 #if defined(RAPIDJSON_SIMD) && defined(_MSC_VER)
 #include <intrin.h>
@@ -337,19 +342,13 @@ protected:
 
         char buffer[25];
         char* end;
-        if (std::floor(d) != d)
+        if (ngine::Math::Floor(d) != d)
         {
-			auto result = fmt::format_to_n(buffer, 25 - 1, FMT_STRING("{:.{}g}"), d, maxDecimalPlaces_);
-			// Null-terminate the buffer (safe because we passed sizeof(buffer)-1 above)
-			*result.out = '\0';
-			end = result.out;
+            end = ngine::Math::Internal::Serialize(buffer, 25 - 1, d, maxDecimalPlaces_);
 		}
 		else
 		{
-			auto result = fmt::format_to_n(buffer, 25 - 1, FMT_STRING("{}"), (std::int64_t)d);
-			// Null-terminate the buffer (safe because we passed sizeof(buffer)-1 above)
-			*result.out = '\0';
-			end = result.out;
+            end = ngine::Math::Internal::Serialize(buffer, 25 - 1, (std::int64_t)d);
 		}
 
         PutReserve(*os_, static_cast<size_t>(end - buffer));
@@ -546,19 +545,14 @@ inline bool Writer<StringBuffer>::WriteDouble(double d) {
     
     char *buffer = os_->Push(25);
     char* end;
-	if (std::floor(d) != d)
-	{
-		auto result = fmt::format_to_n(buffer, 25 - 1, FMT_STRING("{:.{}g}"), d, maxDecimalPlaces_);
-		// Null-terminate the buffer (safe because we passed sizeof(buffer)-1 above)
-		*result.out = '\0';
-		end = result.out;
+
+    if (ngine::Math::Floor(d) != d)
+    {
+        end = ngine::Math::Internal::Serialize(buffer, 25 - 1, d, maxDecimalPlaces_);
 	}
 	else
 	{
-		auto result = fmt::format_to_n(buffer, 25 - 1, FMT_STRING("{}"), (std::int64_t)d);
-		// Null-terminate the buffer (safe because we passed sizeof(buffer)-1 above)
-		*result.out = '\0';
-		end = result.out;
+        end = ngine::Math::Internal::Serialize(buffer, 25 - 1, (std::int64_t)d);
 	}
     os_->Pop(static_cast<size_t>(25 - (end - buffer)));
     return true;
