@@ -10,6 +10,10 @@
 #include <Common/Math/Vector3/Max.h>
 #include <Common/Math/Vector3/Abs.h>
 #include <Common/Math/Vector3/Floor.h>
+#include <Common/Math/Vector4/Round.h>
+#include <Common/Math/Vector4/Min.h>
+#include <Common/Math/Vector4/Max.h>
+#include <Common/Math/Clamp.h>
 #include <Common/Math/LinearInterpolate.h>
 #include <Common/Math/Step.h>
 #include <Common/Math/Fract.h>
@@ -56,6 +60,27 @@ namespace ngine::Math
 	}
 
 	template<typename T>
+	struct TColor;
+
+	struct TRIVIAL_ABI PackedColor32
+	{
+		PackedColor32() = default;
+		explicit constexpr PackedColor32(const uint32 value)
+			: m_value(value)
+		{
+		}
+		constexpr PackedColor32(const uint32 r, const uint32 g, const uint32 b, const uint32 a = 255)
+			: m_value{(r << 24) | (g << 16) | (b << 8) | a}
+		{
+		}
+
+		template<typename UnitType>
+		explicit PackedColor32(const TColor<UnitType> color);
+
+		uint32 m_value;
+	};
+
+	template<typename T>
 	struct TRIVIAL_ABI alignas(TVector4<T>) TColor
 	{
 		inline static constexpr Guid TypeGuid = "{83198F17-49FA-4B1C-8418-8EE22EAE7690}"_guid;
@@ -92,6 +117,11 @@ namespace ngine::Math
 
 		FORCE_INLINE constexpr TColor(const Vector4Type value) noexcept
 			: m_vector(value)
+		{
+		}
+
+		FORCE_INLINE constexpr TColor(const PackedColor32 packedColor) noexcept
+			: TColor(FromPacked32(packedColor))
 		{
 		}
 
@@ -268,6 +298,32 @@ namespace ngine::Math
 		}
 
 		FlatString<10> ToString() const;
+		[[nodiscard]] PackedColor32 ToPacked32() const
+		{
+			if constexpr (TypeTraits::IsFloatingPoint<T>)
+			{
+				const Vector4ui packed = (Vector4ui)(Math::Round(Math::Clamp(m_vector, Vector4Type{T(0)}, Vector4Type{T(1)}) * Vector4Type{T(255)})
+				);
+				return PackedColor32{packed.x, packed.y, packed.z, packed.w};
+			}
+			else
+			{
+				const Vector4ui packed = (Vector4ui)Math::Round(Math::Clamp(m_vector, Vector4Type{T(0)}, Vector4Type{T(255)}));
+				return PackedColor32{packed.x, packed.y, packed.z, packed.w};
+			}
+		}
+		[[nodiscard]] constexpr static TColor FromPacked32(const PackedColor32 packedColor)
+		{
+			const Vector4ui packedColors = Vector4ui{packedColor.m_value} >> Vector4ui{24u, 16u, 8u, 0u};
+			if constexpr (TypeTraits::IsFloatingPoint<T>)
+			{
+				return TColor{Vector4Type(packedColors & Vector4ui{0xFF}) / Vector4Type{T(255)}};
+			}
+			else
+			{
+				return TColor{Vector4Type(packedColors & Vector4ui{0xFF})};
+			}
+		}
 
 		//! Converts to HSV (hue saturation
 		[[nodiscard]] Vector4Type GetHSV() const
@@ -334,6 +390,12 @@ namespace ngine::Math
 
 	using Color = TColor<float>;
 	using ColorByte = TColor<uint8>;
+
+	template<typename UnitType>
+	inline PackedColor32::PackedColor32(const TColor<UnitType> color)
+		: PackedColor32{color.ToPacked32()}
+	{
+	}
 
 	namespace Literals
 	{

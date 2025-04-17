@@ -36,6 +36,12 @@ namespace ngine::Math
 		{
 		}
 
+		template<typename OtherType>
+		FORCE_INLINE constexpr TFrequency(const TFrequency<OtherType> value) noexcept
+			: m_value(static_cast<T>(value.GetHertz()))
+		{
+		}
+
 		[[nodiscard]] FORCE_INLINE static constexpr TFrequency FromHertz(const T value) noexcept
 		{
 			return TFrequency(value);

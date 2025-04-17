@@ -12,7 +12,7 @@ namespace ngine::Math
 		template<typename T>
 		[[nodiscard]] FORCE_INLINE PURE_NOSTATICS T IntegerAbs(T value) noexcept
 		{
-			return (value < 0) ? -value : value;
+			return (value < 0) ? (T)-value : value;
 		}
 	}
 

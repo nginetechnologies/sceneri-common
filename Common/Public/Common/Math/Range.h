@@ -123,7 +123,7 @@ namespace ngine::Math
 			}
 		}
 
-		[[nodiscard]] FORCE_INLINE PURE_STATICS T GetRemappedValue(const T value, const Range otherRange)
+		[[nodiscard]] FORCE_INLINE PURE_STATICS T GetRemappedValue(const T value, const Range otherRange) const
 		{
 			const RatioType ratio = otherRange.GetClampedRatio(value);
 			return GetValueFromRatio(ratio);
