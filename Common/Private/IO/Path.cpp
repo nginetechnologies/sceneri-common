@@ -171,33 +171,65 @@ namespace ngine::IO
 #endif
 	}
 
-	bool Path::IsDirectory() const
+	Path::Type Path::GetType() const
 	{
 #if PLATFORM_WINDOWS
-		return (GetFileAttributesW(GetZeroTerminated()) & FILE_ATTRIBUTE_DIRECTORY) != 0;
+		const DWORD flags = GetFileAttributesW(GetZeroTerminated());
+		if (flags == INVALID_FILE_ATTRIBUTES)
+		{
+			return Type::Invalid;
+		}
+		else if ((flags & FILE_ATTRIBUTE_REPARSE_POINT) != 0)
+		{
+			return Type::SymbolicLink;
+		}
+		else if ((flags & FILE_ATTRIBUTE_DIRECTORY) != 0)
+		{
+			return Type::Directory;
+		}
+		else
+		{
+			return Type::File;
+		}
 #elif PLATFORM_POSIX
 		struct stat buffer;
 		if (stat(GetZeroTerminated(), &buffer) != 0)
 		{
-			return false;
+			return Type::Invalid;
 		}
-		return S_ISDIR(buffer.st_mode);
+		if (S_ISLNK(buffer.st_mode))
+		{
+			return Type::SymbolicLink;
+		}
+		else if (S_ISDIR(buffer.st_mode))
+		{
+			return Type::Directory;
+		}
+		else if (S_ISREG(buffer.st_mode))
+		{
+			return Type::File;
+		}
+		else
+		{
+			return Type::Invalid;
+		}
 #endif
+	}
+
+	bool Path::IsDirectory() const
+	{
+		return GetType() == Type::Directory;
 	}
 
 	bool Path::IsFile() const
 	{
-		return !IsDirectory();
+		const Type type = GetType();
+		return type == Type::File || type == Type::SymbolicLink;
 	}
 
 	bool Path::IsSymbolicLink() const
 	{
-#if PLATFORM_WINDOWS
-		return (GetFileAttributesW(GetZeroTerminated()) & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
-#elif PLATFORM_POSIX
-		struct stat buffer;
-		return lstat(GetZeroTerminated(), &buffer) == 0;
-#endif
+		return GetType() == Type::SymbolicLink;
 	}
 
 	Path Path::GetSymbolicLinkTarget() const

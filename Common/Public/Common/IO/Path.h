@@ -65,6 +65,15 @@ namespace ngine::IO
 		[[nodiscard]] static Path GetHomeDirectory();
 		[[nodiscard]] static Path GetDownloadsDirectory();
 
+		enum class Type : uint8
+		{
+			Invalid,
+			File,
+			Directory,
+			SymbolicLink
+		};
+		[[nodiscard]] Type GetType() const;
+
 		[[nodiscard]] bool IsDirectory() const;
 		[[nodiscard]] bool IsFile() const;
 		[[nodiscard]] bool IsSymbolicLink() const;
