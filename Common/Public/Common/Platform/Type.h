@@ -44,6 +44,19 @@ namespace ngine::Platform
 #error "Unknown platform"
 #endif
 
-	[[nodiscard]] PURE_STATICS bool IsDesktop();
-	[[nodiscard]] PURE_STATICS bool IsMobile();
+	//! Checks the effective platform
+	//! Generally returns the same result as Type::Current, except for Web where the underlying platform can differ
+	[[nodiscard]] PURE_STATICS Type GetEffectiveType();
+
+	enum class Class : uint8
+	{
+		//! Laptops and computers (Windows, Linux & macOS)
+		Desktop,
+		//! Phones and tablets (Android, iOS & Linux)
+		//! Note: Devices such as SteamDeck will classify as mobile despite running traditionally desktop-y OS
+		Mobile,
+		//! Immersive XR devices (visionOS)
+		Spatial
+	};
+	[[nodiscard]] PURE_STATICS Class GetClass();
 }
