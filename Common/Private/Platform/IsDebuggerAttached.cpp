@@ -1,4 +1,5 @@
 #include <Common/Platform/IsDebuggerAttached.h>
+#include <Common/Platform/Environment.h>
 #include <Common/Memory/Containers/StringView.h>
 #include <Common/IO/File.h>
 #include <Common/IO/Path.h>
@@ -20,6 +21,8 @@
 #include <sys/sysctl.h>
 #include <mach/mach.h>
 #include <mach/task_info.h>
+#elif PLATFORM_ANDROID || PLATFORM_LINUX
+#include <sys/ptrace.h>
 #endif
 
 #if PLATFORM_EMSCRIPTEN
@@ -84,21 +87,33 @@ bool IsDebuggerAttached()
 		}
 #elif PLATFORM_ANDROID || PLATFORM_LINUX
 		using namespace ngine;
-		IO::File file(IO::Path(MAKE_PATH("/proc/self/status")), IO::AccessModeFlags::Read);
-		if (LIKELY(file.IsValid()))
 		{
-			constexpr ngine::uint32 bufferSize = 10240;
-			char buffer[bufferSize];
-			while (file.ReadLineIntoView(ArrayView<char>{buffer, bufferSize}))
+			IO::File file(IO::Path(MAKE_PATH("/proc/self/status")), IO::AccessModeFlags::Read);
+			if (LIKELY(file.IsValid()))
 			{
-				constexpr ConstStringView prefix("TracerPid:\t");
-				const ConstStringView bufferView{buffer, prefix.GetSize()};
-				if (prefix == bufferView)
+				constexpr ngine::uint32 bufferSize = 10240;
+				char buffer[bufferSize];
+				while (file.ReadLineIntoView(ArrayView<char>{buffer, bufferSize}))
 				{
-					// Report that we are being debugged if the tracer PID is anything other than 0
-					return buffer[prefix.GetSize()] != '0';
+					constexpr ConstStringView prefix("TracerPid:\t");
+					const ConstStringView bufferView{buffer, prefix.GetSize()};
+					if (prefix == bufferView)
+					{
+						// Report that we are being debugged if the tracer PID is anything other than 0
+						return buffer[prefix.GetSize()] != '0';
+					}
 				}
 			}
+		}
+
+		{
+			errno = 0;
+			ptrace(PTRACE_TRACEME, 0, nullptr, 0);
+			if (errno == EPERM)
+			{
+				return true;
+			}
+			ptrace(PTRACE_DETACH, 0, nullptr, 0); // Clean up
 		}
 		return false;
 #elif PLATFORM_EMSCRIPTEN
@@ -120,5 +135,14 @@ namespace ngine
 #else
 		raise(SIGSEGV);
 #endif
+	}
+
+	namespace Platform::Internal
+	{
+		inline static Environment CurrentEnvironment = DefaultEnvironment;
+		[[nodiscard]] Environment& GetCurrentEnvironment()
+		{
+			return CurrentEnvironment;
+		}
 	}
 }
