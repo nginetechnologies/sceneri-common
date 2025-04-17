@@ -218,14 +218,14 @@ namespace ngine
 		{
 		}
 		template<size Size>
-		FORCE_INLINE constexpr TStringView& operator=(const CharType (&data)[Size] LIFETIME_BOUND) noexcept
+		FORCE_INLINE constexpr TStringView& operator=(const CharType (&data)[Size]) noexcept
 		{
 			const SizeType size = Size - (data[Size - 1] == '\0');
 			BaseType::operator=(BaseType{data, data + size});
 			return *this;
 		}
 		template<size Size>
-		FORCE_INLINE constexpr TStringView(CharType (&data)[Size] LIFETIME_BOUND) noexcept
+		FORCE_INLINE constexpr TStringView(CharType (&data)[Size]) noexcept
 			: TStringView(data, Size - (data[Size - 1] == '\0'))
 		{
 		}

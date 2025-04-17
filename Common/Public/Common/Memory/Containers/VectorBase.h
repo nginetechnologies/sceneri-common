@@ -9,6 +9,7 @@
 #include <Common/Math/CoreNumericTypes.h>
 #include <Common/Math/NumericLimits.h>
 #include <Common/Math/Max.h>
+#include <Common/Math/Min.h>
 #include <Common/TypeTraits/IsTriviallyConstructible.h>
 #include <Common/TypeTraits/IsTriviallyDestructible.h>
 #include "ArrayView.h"
@@ -211,8 +212,7 @@ namespace ngine
 				Assert(GetCapacity() >= other.m_size);
 			}
 
-			ReserveOrAssert(other.GetSize());
-
+			ReserveOrAssert(other.GetSize(), Memory::ReserveExact);
 			m_size = other.GetSize();
 			GetView().CopyConstruct(other.GetView());
 
@@ -245,8 +245,7 @@ namespace ngine
 		TVector& operator=(const ArrayView<const ContainedType, OtherSizeType, OtherIndexType> view) noexcept
 		{
 			Clear();
-			ReserveOrAssert(view.GetSize());
-
+			ReserveOrAssert(view.GetSize(), Memory::ReserveExact);
 			m_size = view.GetSize();
 			GetView().CopyConstruct(view);
 			return *this;
@@ -418,7 +417,7 @@ namespace ngine
 			if (!Contains(element))
 			{
 				Assert(m_size != GetTheoreticalCapacity());
-				GrowCapacityOrAssert(m_size + 1);
+				ReserveOrAssert(m_size + 1, Memory::ReserveExponential);
 
 				PointerType pElement = BaseType::m_allocator.GetData() + m_size;
 				new (pElement) ContainedType(Forward<ContainedType>(element));
@@ -432,7 +431,7 @@ namespace ngine
 		ContainedType& EmplaceBack(Args&&... args) noexcept LIFETIME_BOUND
 		{
 			Assert(m_size != GetTheoreticalCapacity());
-			GrowCapacityOrAssert(m_size + 1);
+			ReserveOrAssert(m_size + 1, Memory::ReserveExponential);
 
 			PointerType pElement = BaseType::m_allocator.GetData() + m_size;
 			new (pElement) ContainedType(Forward<Args&&>(args)...);
@@ -440,21 +439,36 @@ namespace ngine
 			return *pElement;
 		}
 
-		template<typename... Args, bool AllowResize = SupportResize, typename = EnableIf<AllowResize>>
-		ContainedType& Emplace(const ConstPointerType whereIt, Memory::DefaultConstructType, Args&&... args) noexcept LIFETIME_BOUND
+		template<
+			typename... Args,
+			bool AllowResize = SupportResize,
+			typename ConstructType = Memory::DefaultConstructType,
+			typename = EnableIf<AllowResize>>
+		ContainedType& Emplace(const ConstPointerType whereIt, ConstructType, Args&&... args) noexcept LIFETIME_BOUND
 		{
 			Assert(whereIt >= begin().Get() || (whereIt == nullptr && IsEmpty()));
 			const SizeType index = static_cast<SizeType>(whereIt - BaseType::m_allocator.GetData());
 
-			GrowCapacityOrAssert(Math::Max(index + 1, m_size + 1));
+			ReserveOrAssert((SizeType)Math::Max(index + 1, m_size + 1), Memory::ReserveExponential);
 
-			if constexpr (TypeTraits::IsTriviallyConstructible<ContainedType> || TypeTraits::IsDefaultConstructible<ContainedType>)
+			if constexpr (TypeTraits::IsSame<ConstructType, Memory::DefaultConstructType>)
 			{
-				BaseType::m_allocator.GetView().GetSubView(m_size, (SizeType)Math::Max((int64)index - (int64)m_size, (int64)0)).DefaultConstruct();
+				if constexpr (TypeTraits::IsTriviallyConstructible<ContainedType> || TypeTraits::IsDefaultConstructible<ContainedType>)
+				{
+					BaseType::m_allocator.GetView()
+						.GetSubView(m_size, (SizeType)Math::Max((int64)index - (int64)m_size, (int64)0))
+						.DefaultConstruct();
+				}
+				else
+				{
+					Assert((index <= m_size) | (index == m_size), "Can not default construct elements!");
+				}
 			}
+			else if constexpr (TypeTraits::IsSame<ConstructType, Memory::UninitializedType>)
+				;
 			else
 			{
-				Assert((index <= m_size) | (index == m_size), "Can not default construct elements!");
+				static_unreachable("Invalid construct type");
 			}
 
 			// Copy existing elements at index
@@ -465,38 +479,21 @@ namespace ngine
 				target.CopyFromWithOverlap(GetSubView(index, numMovedElements));
 			}
 
-			new (BaseType::m_allocator.GetData() + index) ContainedType(Forward<Args&&>(args)...);
-			m_size = Math::Max(index + 1, m_size + 1);
-
-			return *(BaseType::m_allocator.GetData() + index);
-		}
-
-		template<typename... Args, bool AllowResize = SupportResize, typename = EnableIf<AllowResize>>
-		ContainedType& Emplace(const ConstPointerType whereIt, Memory::UninitializedType, Args&&... args) noexcept LIFETIME_BOUND
-		{
-			Assert(whereIt >= begin().Get() || (whereIt == nullptr && IsEmpty()));
-			const SizeType index = static_cast<SizeType>(whereIt - BaseType::m_allocator.GetData());
-
-			GrowCapacityOrAssert((SizeType)Math::Max(index + 1, m_size + 1));
-
-			// Copy existing elements at index
-			{
-				View target = BaseType::m_allocator.GetView() + index + 1;
-
-				const SizeType numMovedElements = Math::Max(m_size, index) - index;
-				target.CopyFromWithOverlap(GetSubView(index, numMovedElements));
-			}
-
-			PointerType pData = BaseType::m_allocator.GetData();
-			new (pData + index) ContainedType(Forward<Args&&>(args)...);
+			PointerType pData = BaseType::m_allocator.GetData() + index;
+			new (pData) ContainedType(Forward<Args&&>(args)...);
 			m_size = (SizeType)Math::Max(index + 1, m_size + 1);
 
-			return *(pData + index);
+			return *pData;
 		}
 
-		template<typename ElementType, typename ViewSizeType, bool AllowResize = SupportResize, typename = EnableIf<AllowResize>>
+		template<
+			typename ElementType,
+			typename ViewSizeType,
+			bool AllowResize = SupportResize,
+			typename ConstructType = Memory::DefaultConstructType,
+			typename = EnableIf<AllowResize>>
 		ArrayView<ContainedType, SizeType> MoveEmplaceRange(
-			const ConstPointerType whereIt, Memory::DefaultConstructType, const ArrayView<ElementType, ViewSizeType> range
+			const ConstPointerType whereIt, ConstructType, const ArrayView<ElementType, ViewSizeType> range
 		) noexcept LIFETIME_BOUND
 		{
 			Assert(!Overlaps(range));
@@ -504,46 +501,27 @@ namespace ngine
 			Assert(whereIt >= begin().Get() || (whereIt == nullptr && IsEmpty()));
 			const SizeType index = static_cast<SizeType>(whereIt - GetData());
 
-			GrowCapacityOrAssert((SizeType)Math::Max(index + 1 + range.GetSize(), m_size + range.GetSize()));
+			ReserveOrAssert((SizeType)Math::Max(index + 1 + range.GetSize(), m_size + range.GetSize()), Memory::ReserveExponential);
 
-			if constexpr (TypeTraits::IsTriviallyConstructible<ContainedType> || TypeTraits::IsDefaultConstructible<ContainedType>)
+			if constexpr (TypeTraits::IsSame<ConstructType, Memory::DefaultConstructType>)
 			{
-				BaseType::m_allocator.GetView().GetSubView(m_size, (SizeType)Math::Max((int64)index - (int64)m_size, (int64)0)).DefaultConstruct();
+				if constexpr (TypeTraits::IsTriviallyConstructible<ContainedType> || TypeTraits::IsDefaultConstructible<ContainedType>)
+				{
+					BaseType::m_allocator.GetView()
+						.GetSubView(m_size, (SizeType)Math::Max((int64)index - (int64)m_size, (int64)0))
+						.DefaultConstruct();
+				}
+				else
+				{
+					Assert((index <= m_size) | (index == m_size), "Can not default construct elements!");
+				}
 			}
+			else if constexpr (TypeTraits::IsSame<ConstructType, Memory::UninitializedType>)
+				;
 			else
 			{
-				Assert((index <= m_size) | (index == m_size), "Can not default construct elements!");
+				static_unreachable("Invalid construct type");
 			}
-
-			// Copy existing elements at index
-			{
-				View target = BaseType::m_allocator.GetView() + index + range.GetSize();
-
-				const SizeType numMovedElements = Math::Max(m_size, index) - index;
-				target.CopyFromWithOverlap(GetSubView(index, numMovedElements));
-			}
-
-			PointerType pData = BaseType::m_allocator.GetData();
-			for (ElementType& newElement : range)
-			{
-				const SizeType rangeIndex = range.GetIteratorIndex(Memory::GetAddressOf(newElement));
-				new (pData + index + rangeIndex) ContainedType(Move(newElement));
-			}
-			m_size = (SizeType)Math::Max(index + range.GetSize(), m_size + range.GetSize());
-			return {pData + index, range.GetSize()};
-		}
-
-		template<typename ElementType, typename ViewSizeType, bool AllowResize = SupportResize, typename = EnableIf<AllowResize>>
-		ArrayView<ContainedType, SizeType> MoveEmplaceRange(
-			const ConstPointerType whereIt, Memory::UninitializedType, const ArrayView<ElementType, ViewSizeType> range
-		) noexcept LIFETIME_BOUND
-		{
-			Assert(!Overlaps(range));
-
-			Assert(whereIt >= begin().Get() || (whereIt == nullptr && IsEmpty()));
-			const SizeType index = static_cast<SizeType>(whereIt - GetData());
-
-			GrowCapacityOrAssert((SizeType)Math::Max(index + 1 + range.GetSize(), m_size + range.GetSize()));
 
 			// Copy existing elements at index
 			{
@@ -568,7 +546,7 @@ namespace ngine
 		{
 			Assert(!Overlaps(range));
 
-			GrowCapacityOrAssert(m_size + range.GetSize());
+			ReserveOrAssert(m_size + range.GetSize(), Memory::ReserveExponential);
 			const SizeType index = GetSize();
 
 			PointerType pData = BaseType::m_allocator.GetData();
@@ -581,9 +559,14 @@ namespace ngine
 			return {pData + index, range.GetSize()};
 		}
 
-		template<typename ElementType, typename ViewSizeType, bool AllowResize = SupportResize, typename = EnableIf<AllowResize>>
+		template<
+			typename ElementType,
+			typename ViewSizeType,
+			bool AllowResize = SupportResize,
+			typename ConstructType = Memory::DefaultConstructType,
+			typename = EnableIf<AllowResize>>
 		ArrayView<ContainedType, SizeType> CopyEmplaceRange(
-			const ConstPointerType whereIt, Memory::DefaultConstructType, const ArrayView<const ElementType, ViewSizeType> range
+			const ConstPointerType whereIt, ConstructType, const ArrayView<const ElementType, ViewSizeType> range
 		) noexcept LIFETIME_BOUND
 		{
 			Assert(!Overlaps(range));
@@ -591,15 +574,26 @@ namespace ngine
 			Assert(whereIt >= begin().Get() || (whereIt == nullptr && IsEmpty()));
 			const SizeType index = static_cast<SizeType>(whereIt - GetData());
 
-			GrowCapacityOrAssert((SizeType)Math::Max(index + 1 + range.GetSize(), m_size + range.GetSize()));
+			ReserveOrAssert((SizeType)Math::Max(index + 1 + range.GetSize(), m_size + range.GetSize()), Memory::ReserveExponential);
 
-			if constexpr (TypeTraits::IsTriviallyConstructible<ContainedType> || TypeTraits::IsDefaultConstructible<ContainedType>)
+			if constexpr (TypeTraits::IsSame<ConstructType, Memory::DefaultConstructType>)
 			{
-				BaseType::m_allocator.GetView().GetSubView(m_size, (SizeType)Math::Max((int64)index - (int64)m_size, (int64)0)).DefaultConstruct();
+				if constexpr (TypeTraits::IsTriviallyConstructible<ContainedType> || TypeTraits::IsDefaultConstructible<ContainedType>)
+				{
+					BaseType::m_allocator.GetView()
+						.GetSubView(m_size, (SizeType)Math::Max((int64)index - (int64)m_size, (int64)0))
+						.DefaultConstruct();
+				}
+				else
+				{
+					Assert((index <= m_size) | (index == m_size), "Can not default construct elements!");
+				}
 			}
+			else if constexpr (TypeTraits::IsSame<ConstructType, Memory::UninitializedType>)
+				;
 			else
 			{
-				Assert((index <= m_size) | (index == m_size), "Can not default construct elements!");
+				static_unreachable("Invalid construct type");
 			}
 
 			// Copy existing elements at index
@@ -621,41 +615,11 @@ namespace ngine
 		}
 
 		template<typename ElementType, typename ViewSizeType, bool AllowResize = SupportResize, typename = EnableIf<AllowResize>>
-		ArrayView<ContainedType, SizeType> CopyEmplaceRange(
-			const ConstPointerType whereIt, Memory::UninitializedType, const ArrayView<const ElementType, ViewSizeType> range
-		) noexcept LIFETIME_BOUND
-		{
-			Assert(!Overlaps(range));
-
-			Assert(whereIt >= begin().Get() || (whereIt == nullptr && IsEmpty()));
-			const SizeType index = static_cast<SizeType>(whereIt - GetData());
-
-			GrowCapacityOrAssert((SizeType)Math::Max(index + range.GetSize(), m_size + range.GetSize()));
-
-			// Copy existing elements at index
-			{
-				View target = BaseType::m_allocator.GetView() + index + range.GetSize();
-
-				const SizeType numMovedElements = Math::Max(m_size, index) - index;
-				target.CopyFromWithOverlap(GetSubView(index, numMovedElements));
-			}
-
-			PointerType pData = BaseType::m_allocator.GetData();
-			for (const ElementType& newElement : range)
-			{
-				const SizeType rangeIndex = range.GetIteratorIndex(Memory::GetAddressOf(newElement));
-				new (GetData() + index + rangeIndex) ContainedType(newElement);
-			}
-			m_size = (SizeType)Math::Max(index + range.GetSize(), m_size + range.GetSize());
-			return {pData + index, range.GetSize()};
-		}
-
-		template<typename ElementType, typename ViewSizeType, bool AllowResize = SupportResize, typename = EnableIf<AllowResize>>
 		ArrayView<ContainedType, SizeType> CopyEmplaceRangeBack(const ArrayView<const ElementType, ViewSizeType> range) noexcept LIFETIME_BOUND
 		{
 			Assert(!Overlaps(range));
 
-			GrowCapacityOrAssert(m_size + range.GetSize());
+			ReserveOrAssert(m_size + range.GetSize(), Memory::ReserveExponential);
 			const SizeType index = GetSize();
 
 			PointerType pData = BaseType::m_allocator.GetData();
@@ -711,7 +675,7 @@ namespace ngine
 		{
 			Assert(whereIt != Memory::GetAddressOf(existingElement));
 			const SizeType index = static_cast<SizeType>(whereIt - BaseType::m_allocator.GetData());
-			GrowCapacityOrAssert(m_size + index + 1);
+			ReserveOrAssert(m_size + index + 1, Memory::ReserveExponential);
 
 			ContainedType temporary = Move(*whereIt);
 			*whereIt = Move(existingElement);
@@ -725,7 +689,7 @@ namespace ngine
 			const SizeType index = static_cast<SizeType>(whereIt - BaseType::m_allocator.GetData());
 
 			Assert(m_size != GetTheoreticalCapacity());
-			GrowCapacityOrAssert(m_size + index + other.GetSize());
+			ReserveOrAssert(m_size + index + other.GetSize(), Memory::ReserveExponential);
 
 			// Copy existing elements at index
 			{
@@ -747,7 +711,7 @@ namespace ngine
 			const SizeType index = static_cast<SizeType>(whereIt - BaseType::m_allocator.GetData());
 
 			Assert(m_size != GetTheoreticalCapacity());
-			GrowCapacityOrAssert(m_size + index + view.GetSize());
+			ReserveOrAssert(m_size + index + view.GetSize(), Memory::ReserveExponential);
 
 			// Copy existing elements at index
 			{
@@ -929,98 +893,98 @@ namespace ngine
 			}
 		}
 
-		FORCE_INLINE void Reserve(const SizeType size) noexcept
-		{
-			ReserveOrAssert(size);
-		}
-
-		FORCE_INLINE void ReserveAdditionalCapacity(const SizeType size) noexcept
-		{
-			Reserve(m_size + size);
-		}
-
 		template<
-			typename ElementType = ContainedType,
-			bool AllowResize = SupportResize,
-			bool CanDefaultConstruct = TypeTraits::IsDefaultConstructible<ElementType>>
-		EnableIf<AllowResize && CanDefaultConstruct>
-		Resize(const SizeType size, const Memory::DefaultConstructType = Memory::DefaultConstruct) noexcept
+			bool AllowReallocate = SupportReallocate,
+			typename ReserveStrategyType = Memory::ReserveExactType,
+			typename = EnableIf<AllowReallocate>>
+		void Reserve(SizeType desiredCapacity, const ReserveStrategyType = Memory::ReserveExact) noexcept
 		{
-			if (m_size < size)
+			Assert(desiredCapacity <= GetTheoreticalCapacity(), "Can't reserve more than an allocator's theoretical capacity!");
+			if (GetCapacity() < desiredCapacity)
 			{
-				ReserveOrAssert(size);
-				Grow(size);
+				if constexpr (TypeTraits::IsSame<ReserveStrategyType, Memory::ReserveExponentialType>)
+				{
+					// TODO: Try setting this to 2-ish, not sure why ours is so much higher than std on most compilers
+					desiredCapacity = Math::Min(SizeType(desiredCapacity * (SizeType)4), GetTheoreticalCapacity());
+				}
+				BaseType::m_allocator.Allocate(desiredCapacity);
+			}
+		}
+		template<
+			bool AllowReallocate = SupportReallocate,
+			typename ReserveStrategyType = Memory::ReserveExactType,
+			typename = EnableIf<AllowReallocate>>
+		void
+		ReserveAdditionalCapacity(const SizeType additionalCapacity, const ReserveStrategyType reserveStrategy = Memory::ReserveExact) noexcept
+		{
+			Reserve(m_size + additionalCapacity, reserveStrategy);
+		}
+
+		//! Grow or shrink the vector to the specified size, depending on current size
+		template<typename ElementType = ContainedType, bool AllowResize = SupportResize, typename ConstructType = Memory::DefaultConstructType>
+		EnableIf<AllowResize> Resize(const SizeType size, const ConstructType constructType = Memory::DefaultConstruct) noexcept
+		{
+			if constexpr (TypeTraits::IsSame<ConstructType, Memory::DefaultConstructType> || TypeTraits::IsSame<ConstructType, Memory::UninitializedType>)
+			{
+				if (m_size < size)
+				{
+					Grow(size, constructType);
+				}
+				else
+				{
+					Shrink(size);
+				}
+			}
+			else if constexpr (TypeTraits::IsSame<ConstructType, Memory::ZeroedType>)
+			{
+				const SizeType previousSize = m_size;
+				Resize(size, Memory::Uninitialized);
+				GetView().GetSubViewFrom(previousSize).ZeroInitialize();
 			}
 			else
 			{
-				Shrink(size);
+				static_unreachable("Invalid construct type");
 			}
 		}
 
-		template<bool AllowResize = SupportResize>
-		EnableIf<AllowResize> Resize(const SizeType size, const Memory::UninitializedType) noexcept
+		//! Grows the vector to the specified size
+		//! Assumes that the requested size is always larger or equal to the current size
+		template<typename ElementType = ContainedType, bool AllowResize = SupportResize, typename ConstructType = Memory::DefaultConstructType>
+		EnableIf<AllowResize> Grow(const SizeType size, const ConstructType = Memory::DefaultConstruct) noexcept
 		{
-			if (m_size < size)
+			Expect(size >= m_size);
+			if constexpr (TypeTraits::IsSame<ConstructType, Memory::DefaultConstructType>)
 			{
-				ReserveOrAssert(size);
+				static_assert(TypeTraits::IsDefaultConstructible<ElementType>, "Type must be default constructible!");
+				ReserveOrAssert(size, Memory::ReserveExact);
+				Assert(size <= GetCapacity());
+				PointerType pData = BaseType::m_allocator.GetData();
+				View(pData + m_size, pData + size).DefaultConstruct();
+				m_size = size;
+			}
+			else if constexpr (TypeTraits::IsSame<ConstructType, Memory::UninitializedType>)
+			{
+				ReserveOrAssert(size, Memory::ReserveExact);
+				Assert(size <= GetCapacity());
+				m_size = size;
+			}
+			else if constexpr (TypeTraits::IsSame<ConstructType, Memory::ZeroedType>)
+			{
+				ReserveOrAssert(size, Memory::ReserveExact);
+				Assert(size <= GetCapacity());
+				PointerType pData = BaseType::m_allocator.GetData();
+				View(pData + m_size, pData + size).ZeroInitialize();
 				m_size = size;
 			}
 			else
 			{
-				Shrink(size);
+				static_unreachable("Invalid construct type");
 			}
 		}
 
-		template<bool AllowResize = SupportResize>
-		EnableIf<AllowResize> Resize(const SizeType size, const Memory::ZeroedType) noexcept
-		{
-			const SizeType previousSize = m_size;
-			Resize(size, Memory::Uninitialized);
-			GetView().GetSubViewFrom(previousSize).ZeroInitialize();
-		}
-
-		template<
-			typename ElementType = ContainedType,
-			bool AllowResize = SupportResize,
-			bool CanDefaultConstruct = TypeTraits::IsDefaultConstructible<ElementType>>
-		EnableIf<AllowResize && !CanDefaultConstruct> Resize(const SizeType size) noexcept
-		{
-			// Limitations mean that this container can only shrink in size
-			Shrink(size);
-		}
-
-		template<
-			typename ElementType = ContainedType,
-			bool AllowResize = SupportResize,
-			bool CanDefaultConstruct = TypeTraits::IsDefaultConstructible<ElementType>>
-		EnableIf<AllowResize && CanDefaultConstruct>
-		Grow(const SizeType size, const Memory::DefaultConstructType = Memory::DefaultConstruct) noexcept
-		{
-			Expect(size >= m_size);
-			Assert(size <= GetCapacity());
-			PointerType pData = BaseType::m_allocator.GetData();
-			View(pData + m_size, pData + size).DefaultConstruct();
-			m_size = size;
-		}
-
-		template<bool AllowResize = SupportResize>
-		EnableIf<AllowResize> Grow(const SizeType size, const Memory::UninitializedType) noexcept
-		{
-			Expect(size >= m_size);
-			Assert(size <= GetCapacity());
-			m_size = size;
-		}
-
-		template<bool AllowResize = SupportResize>
-		EnableIf<AllowResize> Grow(const SizeType size, const Memory::ZeroedType) noexcept
-		{
-			Expect(size >= m_size);
-			Assert(size <= GetCapacity());
-			PointerType pData = BaseType::m_allocator.GetData();
-			View(pData + m_size, pData + size).ZeroInitialize();
-			m_size = size;
-		}
-
+		//! Shrinks the vector to the specified size
+		//! Note: this does not reallocate to a smaller size
+		//! Assumes that the requested size is always smaller or equal to the current size
 		template<bool AllowResize = SupportResize>
 		EnableIf<AllowResize> Shrink(const SizeType size) noexcept
 		{
@@ -1104,39 +1068,17 @@ namespace ngine
 		bool Compress(BitView& target) const;
 		bool Decompress(ConstBitView& source);
 	protected:
-		void GrowCapacityOrAssert(const SizeType desiredSize) noexcept
+		template<typename ReserveStrategyType = Memory::ReserveExactType>
+		inline void ReserveOrAssert(const SizeType desiredCapacity, const ReserveStrategyType reserveStrategy = Memory::ReserveExact) noexcept
 		{
-			Assert(desiredSize <= GetTheoreticalCapacity());
-
 			if constexpr (SupportReallocate)
 			{
-				if (GetCapacity() < desiredSize)
-				{
-					BaseType::m_allocator.Allocate(desiredSize * 4);
-				}
+				Reserve(desiredCapacity, reserveStrategy);
 			}
 			else
 			{
-				UNUSED(desiredSize);
-				Assert(desiredSize <= GetCapacity());
-			}
-		}
-
-		void ReserveOrAssert(const SizeType desiredSize) noexcept
-		{
-			Assert(desiredSize <= GetTheoreticalCapacity());
-
-			if constexpr (SupportReallocate)
-			{
-				if (GetCapacity() < desiredSize)
-				{
-					BaseType::m_allocator.Allocate(desiredSize);
-				}
-			}
-			else
-			{
-				UNUSED(desiredSize);
-				Assert(desiredSize <= GetCapacity());
+				UNUSED(desiredCapacity);
+				Assert(desiredCapacity <= GetCapacity());
 			}
 		}
 

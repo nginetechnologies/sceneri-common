@@ -222,7 +222,7 @@ namespace ngine
 		template<typename OtherAllocatorType, uint8 OtherFlags, typename OtherCharType = CharType_>
 		TString& operator=(const TString<OtherCharType, OtherAllocatorType, OtherFlags>& other) noexcept
 		{
-			Reserve(other.GetSize() + 1);
+			BaseType::ReserveOrAssert(other.GetSize() + 1, Memory::ReserveExact);
 			BaseType::operator=(other.GetView());
 
 			BaseType::m_size++;
@@ -235,7 +235,7 @@ namespace ngine
 			typename = EnableIf<(TypeTraits::IsCopyConstructible<ElementType> && AllowResize)>>
 		TString& operator=(const ConstView view) noexcept
 		{
-			Reserve(view.GetSize() + 1);
+			BaseType::ReserveOrAssert(view.GetSize() + 1, Memory::ReserveExact);
 			BaseType::operator=(view);
 
 			BaseType::m_size++;
@@ -309,31 +309,28 @@ namespace ngine
 
 		using BaseType::Contains;
 
+		template<bool AllowResize = SupportResize, typename ConstructType = Memory::DefaultConstructType>
+		EnableIf<AllowResize> Resize(const SizeType size, const ConstructType constructType = Memory::DefaultConstruct) noexcept
+		{
+			BaseType::Resize(size + 1, constructType);
+		}
+
 		template<
-			bool AllowResize = SupportResize,
-			typename ElementType = ValueType,
-			bool CanDefaultConstruct = TypeTraits::IsDefaultConstructible<ElementType>>
-		EnableIf<AllowResize && CanDefaultConstruct>
-		Resize(const SizeType size, const Memory::DefaultConstructType = Memory::DefaultConstruct) noexcept
+			bool AllowReallocate = SupportReallocate,
+			typename ReserveStrategyType = Memory::ReserveExactType,
+			typename = EnableIf<AllowReallocate>>
+		void Reserve(const SizeType desiredCapacity, const ReserveStrategyType reserveStrategy = Memory::ReserveExact) noexcept
 		{
-			BaseType::Resize(size + 1, Memory::DefaultConstruct);
+			BaseType::Reserve(desiredCapacity + 1, reserveStrategy);
 		}
-
-		template<bool AllowResize = SupportResize>
-		EnableIf<AllowResize> Resize(const SizeType size, const Memory::UninitializedType) noexcept
+		template<
+			bool AllowReallocate = SupportReallocate,
+			typename ReserveStrategyType = Memory::ReserveExactType,
+			typename = EnableIf<AllowReallocate>>
+		void
+		ReserveAdditionalCapacity(const SizeType additionalCapacity, const ReserveStrategyType reserveStrategy = Memory::ReserveExact) noexcept
 		{
-			BaseType::Resize(size + 1, Memory::Uninitialized);
-		}
-
-		template<bool AllowResize = SupportResize>
-		EnableIf<AllowResize> Resize(const SizeType size, const Memory::ZeroedType) noexcept
-		{
-			BaseType::Resize(size + 1, Memory::Zeroed);
-		}
-
-		void Reserve(const SizeType size) noexcept
-		{
-			BaseType::Reserve(size + 1);
+			BaseType::ReserveAdditionalCapacity(additionalCapacity + 1, reserveStrategy);
 		}
 
 		template<bool AllowResize = SupportResize, typename = EnableIf<AllowResize>>
@@ -487,7 +484,7 @@ namespace ngine
 		template<typename SourceCharType, typename OtherSizeType, bool CanResize = SupportResize, typename = EnableIf<CanResize>>
 		TString& operator+=(const TStringView<SourceCharType, OtherSizeType> other) noexcept LIFETIME_BOUND
 		{
-			Reserve(GetSize() + (SizeType)other.GetSize());
+			BaseType::ReserveOrAssert(GetSize() + (SizeType)other.GetSize() + 1, Memory::ReserveExponential);
 
 			if constexpr (TypeTraits::IsSame<TypeTraits::WithoutConst<SourceCharType>, CharType>)
 			{
@@ -720,6 +717,9 @@ namespace ngine
 
 		// Decodes / unescapes a strings content from use as a URL or similar
 		[[nodiscard]] static Optional<TString> Unescape(const ConstView view) noexcept;
+
+		[[nodiscard]] static TString EncodeBase64(const ConstView view) noexcept;
+		[[nodiscard]] static TString DecodeBase64(const ConstView view) noexcept;
 
 		bool Serialize(const Serialization::Reader serializer);
 		bool Serialize(Serialization::Writer serializer) const;

@@ -109,14 +109,14 @@ namespace ngine
 		FORCE_INLINE constexpr ArrayView() = default;
 
 		template<size Size>
-		FORCE_INLINE constexpr ArrayView(ContainedType (&element)[Size] LIFETIME_BOUND) noexcept
+		FORCE_INLINE constexpr ArrayView(ContainedType (&element)[Size]) noexcept
 			: m_pBegin(element)
 			, m_size(Size)
 		{
 			Assert(!IsConstantEvaluated() && Memory::IsAligned(m_pBegin, alignof(ContainedType)));
 		}
 		template<size Size>
-		FORCE_INLINE constexpr ArrayView& operator=(ContainedType (&element)[Size] LIFETIME_BOUND) noexcept
+		FORCE_INLINE constexpr ArrayView& operator=(ContainedType (&element)[Size]) noexcept
 		{
 			m_pBegin = element;
 			m_size = Size;

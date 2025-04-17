@@ -28,7 +28,7 @@ namespace ngine
 			Assert(IsZeroTerminated());
 		}
 		template<size Size>
-		constexpr TZeroTerminatedStringView& operator=(const CharType (&data)[Size] LIFETIME_BOUND)
+		constexpr TZeroTerminatedStringView& operator=(const CharType (&data)[Size])
 		{
 			m_pData = data;
 			m_size = Size;
@@ -36,7 +36,7 @@ namespace ngine
 			return *this;
 		}
 		template<size Size>
-		constexpr TZeroTerminatedStringView(CharType (&data)[Size] LIFETIME_BOUND)
+		constexpr TZeroTerminatedStringView(CharType (&data)[Size])
 			: TZeroTerminatedStringView(data, Size)
 		{
 		}

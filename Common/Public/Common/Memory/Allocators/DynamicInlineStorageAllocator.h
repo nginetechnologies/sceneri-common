@@ -101,7 +101,7 @@ namespace ngine::Memory
 			{
 				return m_fixedAllocator.GetData();
 			}
-			return static_cast<AllocatedType*>(m_pData);
+			return m_pData;
 		}
 		[[nodiscard]] PURE_STATICS const AllocatedType* GetData() const noexcept LIFETIME_BOUND
 		{
@@ -113,7 +113,7 @@ namespace ngine::Memory
 			{
 				return m_fixedAllocator.GetData();
 			}
-			return static_cast<const AllocatedType*>(m_pData);
+			return m_pData;
 		}
 		[[nodiscard]] PURE_STATICS constexpr View GetView() noexcept LIFETIME_BOUND
 		{
@@ -154,7 +154,7 @@ namespace ngine::Memory
 			{
 				if (previousCapacity <= InlineCapacity)
 				{
-					void* pNewData = DynamicAllocator::StaticAllocate(m_capacity);
+					AllocatedType* pNewData = DynamicAllocator::StaticAllocate(m_capacity);
 					Memory::CopyWithoutOverlap(pNewData, m_fixedAllocator.GetData(), previousCapacity * sizeof(AllocatedType));
 					m_pData = pNewData;
 				}
@@ -177,7 +177,7 @@ namespace ngine::Memory
 	protected:
 		union
 		{
-			void* m_pData;
+			AllocatedType* m_pData;
 			FixedAllocator m_fixedAllocator;
 		};
 		SizeType m_capacity{0};

@@ -4,6 +4,8 @@
 #include "Common/Memory/Containers/Format/StringView.h"
 #include "Common/Memory/Containers/Format/String.h"
 
+#include "3rdparty/cpp-base64/base64.h"
+
 #if PLATFORM_WINDOWS
 #include <Platform/Windows.h>
 #endif
@@ -41,7 +43,7 @@ namespace ngine
 			Assert(destination.GetSize() >= source.GetSize());
 
 			using Converter = std::codecvt_utf8_utf16<char16_t>;
-			Converter converter;
+			static thread_local Converter converter;
 			mbstate_t state = {};
 
 			const UTF8CharType* firstSource = source.begin();
@@ -90,7 +92,7 @@ namespace ngine
 			Assert(destination.GetSize() >= source.GetSize());
 
 			using Converter = std::codecvt_utf8<char32_t>;
-			Converter converter;
+			static thread_local Converter converter;
 			mbstate_t state = {};
 
 			const UTF8CharType* firstSource = source.begin();
@@ -139,7 +141,7 @@ namespace ngine
 			Assert(destination.GetSize() >= source.GetSize());
 
 			using Converter = std::codecvt_utf8_utf16<char16_t>;
-			Converter converter;
+			static thread_local Converter converter;
 			mbstate_t state = {};
 
 			const char16_t* firstSource = source.begin();
@@ -188,7 +190,7 @@ namespace ngine
 			Assert(destination.GetSize() >= source.GetSize());
 
 			using Converter = std::codecvt_utf16<char32_t>;
-			Converter converter;
+			static thread_local Converter converter;
 			mbstate_t state = {};
 
 			const char* firstSource = reinterpret_cast<const char*>(source.begin().Get());
@@ -243,7 +245,7 @@ namespace ngine
 			Assert(destination.GetSize() >= source.GetSize());
 
 			using Converter = std::codecvt_utf8<char32_t>;
-			Converter converter;
+			static thread_local Converter converter;
 			mbstate_t state = {};
 
 			const char32_t* firstSource = source.begin();
@@ -292,7 +294,7 @@ namespace ngine
 			Assert(destination.GetSize() >= source.GetSize());
 
 			using Converter = std::codecvt_utf16<char32_t>;
-			Converter converter;
+			static thread_local Converter converter;
 			mbstate_t state = {};
 
 			const char32_t* firstSource = source.begin();
@@ -513,17 +515,17 @@ namespace ngine
 			{
 				const bool isAllowedCharacter = (character >= '0' && character <= '9') || (character >= 'a' && character <= 'z') ||
 				                                (character >= 'A' && character <= 'Z') || (character == '-') || (character == '.') ||
-				                                (character == '_') || (character == '-');
+				                                (character == '_') || (character == '~');
 				return !isAllowedCharacter;
 			};
 
 			TString result;
-			result.Reserve(view.GetSize() * 3);
+			result.ReserveOrAssert(view.GetSize() * 3);
 			for (const CharType character : view)
 			{
 				if (shouldEncode(character))
 				{
-					result += TString().Format("%{:#04X}", (char)character);
+					result += TString().Format("%{:02X}", (char)character);
 				}
 				else
 				{
@@ -546,7 +548,7 @@ namespace ngine
 		if constexpr (SupportResize)
 		{
 			TString result;
-			result.Reserve(view.GetSize());
+			result.ReserveOrAssert(view.GetSize());
 
 			for (auto it = view.begin(), end = view.end(); it != end;)
 			{
@@ -599,6 +601,36 @@ namespace ngine
 			Assert(false, "Not supported");
 			ExpectUnreachable();
 		}
+	}
+
+	template<typename CharType, typename AllocatorType, uint8 Flags>
+	/* static */ TString<CharType, AllocatorType, Flags> TString<CharType, AllocatorType, Flags>::EncodeBase64(const ConstView view) noexcept
+	{
+		String convertedString(view);
+		std::string encodedResult = base64_encode(std::string_view{convertedString.GetData(), convertedString.GetSize()});
+
+		TString result{Memory::ConstructWithSize, Memory::Uninitialized, (SizeType)encodedResult.size()};
+		for (size i = 0, count = encodedResult.size(); i < count; ++i)
+		{
+			result[(SizeType)i] = encodedResult[i];
+		}
+
+		return result;
+	}
+
+	template<typename CharType, typename AllocatorType, uint8 Flags>
+	/* static */ TString<CharType, AllocatorType, Flags> TString<CharType, AllocatorType, Flags>::DecodeBase64(const ConstView view) noexcept
+	{
+		String convertedString(view);
+		std::string encodedResult = base64_decode(std::string_view{convertedString.GetData(), convertedString.GetSize()});
+
+		TString result{Memory::ConstructWithSize, Memory::Uninitialized, (SizeType)encodedResult.size()};
+		for (size i = 0, count = encodedResult.size(); i < count; ++i)
+		{
+			result[(SizeType)i] = encodedResult[i];
+		}
+
+		return result;
 	}
 
 	// char

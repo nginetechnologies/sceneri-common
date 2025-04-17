@@ -79,11 +79,11 @@ namespace ngine::Memory
 
 		[[nodiscard]] PURE_STATICS AllocatedType* GetData() noexcept LIFETIME_BOUND
 		{
-			return static_cast<AllocatedType*>(m_pData);
+			return m_pData;
 		}
 		[[nodiscard]] PURE_STATICS const AllocatedType* GetData() const noexcept LIFETIME_BOUND
 		{
-			return static_cast<const AllocatedType*>(m_pData);
+			return m_pData;
 		}
 		[[nodiscard]] PURE_STATICS View GetView() noexcept LIFETIME_BOUND
 		{
@@ -144,35 +144,36 @@ namespace ngine::Memory
 			return true;
 		}
 
-		[[nodiscard]] RESTRICTED_RETURN inline static void* StaticAllocate(const size requiredSize) noexcept
+		[[nodiscard]] RESTRICTED_RETURN inline static AllocatedType* StaticAllocate(const size requiredSize) noexcept
 		{
 			if constexpr (alignof(AllocatedType) > sizeof(void*))
 			{
-				return Memory::AllocateAligned(requiredSize * sizeof(AllocatedType), alignof(AllocatedType));
+				return static_cast<AllocatedType*>(Memory::AllocateAligned(requiredSize * sizeof(AllocatedType), alignof(AllocatedType)));
 			}
 			else if constexpr (sizeof(AllocatedType) * GetTheoreticalCapacity() <= Memory::MaximumSmallAllocationSize)
 			{
-				return Memory::AllocateSmall(requiredSize * sizeof(AllocatedType));
+				return static_cast<AllocatedType*>(Memory::AllocateSmall(requiredSize * sizeof(AllocatedType)));
 			}
 			else
 			{
-				return Memory::Allocate(requiredSize * sizeof(AllocatedType));
+				return static_cast<AllocatedType*>(Memory::Allocate(requiredSize * sizeof(AllocatedType)));
 			}
 		}
 
-		[[nodiscard]] RESTRICTED_RETURN inline static void* StaticReallocate(void* pPointer, const size requiredSize) noexcept
+		[[nodiscard]] RESTRICTED_RETURN inline static AllocatedType* StaticReallocate(AllocatedType* pPointer, const size requiredSize) noexcept
 		{
 			if constexpr (alignof(AllocatedType) > sizeof(void*))
 			{
-				return Memory::ReallocateAligned(pPointer, requiredSize * sizeof(AllocatedType), alignof(AllocatedType));
+				return static_cast<AllocatedType*>(Memory::ReallocateAligned(pPointer, requiredSize * sizeof(AllocatedType), alignof(AllocatedType))
+				);
 			}
 			else
 			{
-				return Memory::Reallocate(pPointer, requiredSize * sizeof(AllocatedType));
+				return static_cast<AllocatedType*>(Memory::Reallocate(pPointer, requiredSize * sizeof(AllocatedType)));
 			}
 		}
 
-		inline static void StaticDeallocate(void* pPointer) noexcept
+		inline static void StaticDeallocate(AllocatedType* pPointer) noexcept
 		{
 			if constexpr (alignof(AllocatedType) > sizeof(void*))
 			{
@@ -184,7 +185,7 @@ namespace ngine::Memory
 			}
 		}
 	protected:
-		void* m_pData = nullptr;
+		AllocatedType* m_pData = nullptr;
 		SizeType m_capacity = 0;
 	};
 }
