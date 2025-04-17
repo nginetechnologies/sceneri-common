@@ -66,7 +66,10 @@ namespace ngine::IO
 		MonitoredDirectory::~MonitoredDirectory()
 		{
 #if PLATFORM_WINDOWS
-			::CloseHandle(m_directoryHandle);
+			if (m_directoryHandle != nullptr)
+			{
+				::CloseHandle(m_directoryHandle);
+			}
 			::CloseHandle(m_event->hEvent);
 #elif PLATFORM_APPLE
 			if (m_dispatchSource != nullptr)
@@ -79,11 +82,6 @@ namespace ngine::IO
 
 				m_dispatchSource = nullptr;
 			}
-
-#if !__has_feature(objc_arc)
-			dispatch_release(m_dispatchQueue);
-			m_dispatchQueue = nullptr;
-#endif
 
 #elif USE_POSIX_FILE_CHANGE_LISTENER
 			if (m_watchDescriptor > 0)
@@ -103,6 +101,11 @@ namespace ngine::IO
 		void MonitoredDirectory::OnChanged()
 		{
 #if PLATFORM_WINDOWS
+			if (m_directoryHandle == nullptr)
+			{
+				return;
+			}
+
 			DWORD numTransferedBytes = 0;
 			if (!GetOverlappedResult(m_directoryHandle, m_event.Get(), &numTransferedBytes, false))
 			{
@@ -170,6 +173,11 @@ namespace ngine::IO
 		void MonitoredDirectory::MonitorForChanges()
 		{
 #if PLATFORM_WINDOWS
+			if (m_directoryHandle == nullptr)
+			{
+				return;
+			}
+
 			DWORD notifyFilter = 0;
 			if (m_listeners.m_added.IsValid())
 			{
@@ -271,6 +279,11 @@ namespace ngine::IO
 	void FileChangeListener::CheckChanges()
 	{
 #if PLATFORM_WINDOWS
+		if (m_eventHandles.IsEmpty())
+		{
+			return;
+		}
+
 		const DWORD waitStatus = WaitForMultipleObjects(m_eventHandles.GetSize(), m_eventHandles.GetData(), false, 0);
 		if (waitStatus < WAIT_OBJECT_0 + m_eventHandles.GetSize())
 		{
