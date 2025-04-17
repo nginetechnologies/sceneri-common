@@ -34,8 +34,14 @@ namespace ngine::CommandLine
 
 		[[nodiscard]] StringViewType GetArgumentValue(const StringViewType name, const Prefix type) const
 		{
-			const Argument& __restrict argument = *FindArgument(name, type);
-			return argument.value;
+			if (const OptionalIterator<const Argument> pArgument = FindArgument(name, type))
+			{
+				return pArgument->value;
+			}
+			else
+			{
+				return {};
+			}
 		}
 	};
 }
