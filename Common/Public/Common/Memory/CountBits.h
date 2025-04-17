@@ -2,12 +2,14 @@
 
 #include <Common/Platform/ForceInline.h>
 #include <Common/Platform/IsConstantEvaluated.h>
+#include <Common/Platform/StaticUnreachable.h>
 #include <Common/Math/CoreNumericTypes.h>
 #include <Common/Math/NumericLimits.h>
 #include <Common/Math/Select.h>
 #include <Common/Math/Range.h>
 #include <Common/Memory/CallbackResult.h>
 #include <Common/Assert/Assert.h>
+#include <Common/TypeTraits/IsSame.h>
 
 #if COMPILER_MSVC && !USE_SSE4_2
 #include <intrin.h>
@@ -127,29 +129,53 @@ namespace ngine::Memory
 
 	//! Gets the number of bits necessary to represent the specific value
 	template<typename Type>
-	[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr Type GetBitWidth(const Type value) noexcept
+	[[nodiscard]] PURE_STATICS constexpr Type GetBitWidth(const Type value) noexcept
 	{
-		return Math::NumericLimits<Type>::NumBits - GetNumberOfLeadingZeros(value);
-	}
-
-	[[nodiscard]] FORCE_INLINE PURE_STATICS uint64 GetNumberOfTrailingZeros(const uint64 value) noexcept
-	{
-#if COMPILER_GCC || COMPILER_CLANG
-		return Math::Select(value == 0u, (uint64)64u, (uint64)__builtin_ctzll(value));
-#else
-		if constexpr (USE_SSE4_2)
+		if (IsConstantEvaluated())
 		{
-			return _tzcnt_u64(value);
+			return value < 2 ? value : (Type)1 + GetBitWidth(Type(value >> 1));
 		}
 		else
 		{
+			return Math::NumericLimits<Type>::NumBits - GetNumberOfLeadingZeros(value);
+		}
+	}
+
+	[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr uint64 GetNumberOfTrailingZeros(uint64 value) noexcept
+	{
+		if (IsConstantEvaluated())
+		{
+			if (value == 0)
+			{
+				return 64;
+			}
+			uint64 count = 0;
+			while ((value & 1) == 0)
+			{
+				value >>= 1;
+				++count;
+			}
+			return count;
+		}
+		else
+		{
+#if COMPILER_GCC || COMPILER_CLANG
+			return Math::Select(value == 0u, (uint64)64u, (uint64)__builtin_ctzll(value));
+#else
+			if constexpr (USE_SSE4_2)
+			{
+				return _tzcnt_u64(value);
+			}
+			else
+			{
 #if COMPILER_MSVC
-			unsigned long bitIndex = 64;
-			const bool result = _BitScanForward64(&bitIndex, value) != 0;
-			return Math::Select(result, uint64(bitIndex), 64ull);
+				unsigned long bitIndex = 64;
+				const bool result = _BitScanForward64(&bitIndex, value) != 0;
+				return Math::Select(result, uint64(bitIndex), 64ull);
+#endif
+			}
 #endif
 		}
-#endif
 	}
 
 #if IS_SIZE_UNIQUE_TYPE
@@ -159,60 +185,103 @@ namespace ngine::Memory
 	}
 #endif
 
-	[[nodiscard]] FORCE_INLINE PURE_STATICS uint32 GetNumberOfTrailingZeros(const uint32 value) noexcept
+	[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr uint32 GetNumberOfTrailingZeros(uint32 value) noexcept
 	{
-#if COMPILER_GCC || COMPILER_CLANG
-		return Math::Select(value == 0u, 32u, (uint32)__builtin_ctz(value));
-#else
-		if constexpr (USE_SSE4_2)
+		if (IsConstantEvaluated())
 		{
-			return _tzcnt_u32(value);
+			if (value == 0)
+			{
+				return 32;
+			}
+			uint32 count = 0;
+			while ((value & 1) == 0)
+			{
+				value >>= 1u;
+				++count;
+			}
+			return count;
 		}
 		else
 		{
+#if COMPILER_GCC || COMPILER_CLANG
+			return Math::Select(value == 0u, 32u, (uint32)__builtin_ctz(value));
+#else
+			if constexpr (USE_SSE4_2)
+			{
+				return _tzcnt_u32(value);
+			}
+			else
+			{
 #if COMPILER_MSVC
-			unsigned long bitIndex = 32;
-			const bool result = _BitScanForward(&bitIndex, value) != 0;
-			return Math::Select(result, uint32(bitIndex), 32u);
+				unsigned long bitIndex = 32;
+				const bool result = _BitScanForward(&bitIndex, value) != 0;
+				return Math::Select(result, uint32(bitIndex), 32u);
+#endif
+			}
 #endif
 		}
-#endif
 	}
 
-	[[nodiscard]] FORCE_INLINE PURE_STATICS uint16 GetNumberOfTrailingZeros(const uint16 value) noexcept
+	[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr uint16 GetNumberOfTrailingZeros(const uint16 value) noexcept
 	{
 		return (uint16)GetNumberOfTrailingZeros((uint32)value | (0xFFFFu << 16));
 	}
 
-	[[nodiscard]] FORCE_INLINE PURE_STATICS uint8 GetNumberOfTrailingZeros(const uint8 value) noexcept
+	[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr uint8 GetNumberOfTrailingZeros(const uint8 value) noexcept
 	{
 		return (uint8)GetNumberOfTrailingZeros((uint32)value | (0xFFu << 8));
 	}
 
-	[[nodiscard]] FORCE_INLINE PURE_STATICS uint64 GetNumberOfSetBits(const uint64 value) noexcept
+	[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr uint64 GetNumberOfSetBits(uint64 value) noexcept
 	{
+		if (IsConstantEvaluated())
+		{
+			uint64 count = 0;
+			while (value)
+			{
+				count += value & 1;
+				value >>= 1;
+			}
+			return count;
+		}
+		else
+		{
 #if COMPILER_GCC || COMPILER_CLANG
-		return __builtin_popcountll(value);
+			return __builtin_popcountll(value);
 #elif USE_SSE
-		return _mm_popcnt_u64(value);
+			return _mm_popcnt_u64(value);
 #endif
+		}
 	}
 
-	[[nodiscard]] FORCE_INLINE PURE_STATICS uint32 GetNumberOfSetBits(const uint32 value) noexcept
+	[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr uint32 GetNumberOfSetBits(uint32 value) noexcept
 	{
+		if (IsConstantEvaluated())
+		{
+			uint32 count = 0;
+			while (value)
+			{
+				count += value & 1;
+				value >>= 1;
+			}
+			return count;
+		}
+		else
+		{
 #if COMPILER_GCC || COMPILER_CLANG
-		return __builtin_popcount(value);
+			return __builtin_popcount(value);
 #elif USE_SSE
-		return _mm_popcnt_u32(value);
+			return _mm_popcnt_u32(value);
 #endif
+		}
 	}
 
-	[[nodiscard]] FORCE_INLINE PURE_STATICS uint16 GetNumberOfSetBits(const uint16 value) noexcept
+	[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr uint16 GetNumberOfSetBits(const uint16 value) noexcept
 	{
 		return (uint16)GetNumberOfSetBits(static_cast<uint32>(value));
 	}
 
-	[[nodiscard]] FORCE_INLINE PURE_STATICS uint8 GetNumberOfSetBits(const uint8 value) noexcept
+	[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr uint8 GetNumberOfSetBits(const uint8 value) noexcept
 	{
 		return (uint8)GetNumberOfSetBits(static_cast<uint32>(value));
 	}
@@ -244,129 +313,157 @@ namespace ngine::Memory
 		Type m_value;
 	};
 
-#if COMPILER_GCC || COMPILER_CLANG
-	[[nodiscard]] FORCE_INLINE BitIndex<uint64> GetFirstSetIndex(const uint64 value) noexcept
-	{
-		const uint64 index = __builtin_ffsll(reinterpret_cast<const int64&>(value));
-		return BitIndex<uint64>{index};
-	}
-	[[nodiscard]] FORCE_INLINE BitIndex<uint32> GetFirstSetIndex(const uint32 value) noexcept
-	{
-		const uint32 index = __builtin_ffs(reinterpret_cast<const int32&>(value));
-		return BitIndex<uint32>{index};
-	}
-	[[nodiscard]] FORCE_INLINE BitIndex<uint16> GetFirstSetIndex(const uint16 value) noexcept
-	{
-		const BitIndex<uint32> result = GetFirstSetIndex((uint32)value);
-		return BitIndex<uint16>{(uint16)result.m_value};
-	}
-	[[nodiscard]] FORCE_INLINE BitIndex<uint8> GetFirstSetIndex(const uint8 value) noexcept
-	{
-		const BitIndex<uint32> result = GetFirstSetIndex((uint32)value);
-		return BitIndex<uint8>{(uint8)result.m_value};
-	}
-#else
 	template<typename Value>
-	[[nodiscard]] FORCE_INLINE BitIndex<Value> GetFirstSetIndex(Value value) noexcept
+	[[nodiscard]] FORCE_INLINE constexpr BitIndex<Value> GetFirstSetIndex(Value value) noexcept
 	{
+		if (IsConstantEvaluated())
+		{
+			if (value == 0)
+			{
+				return {};
+			}
+		}
+		else
+		{
+#if COMPILER_GCC || COMPILER_CLANG
+			if constexpr (TypeTraits::IsSame<Value, uint64>)
+			{
+				const uint64 index = __builtin_ffsll(reinterpret_cast<const int64&>(value));
+				return BitIndex<uint64>{index};
+			}
+			else if constexpr (TypeTraits::IsSame<Value, uint32>)
+			{
+				const uint32 index = __builtin_ffs(reinterpret_cast<const int32&>(value));
+				return BitIndex<uint32>{index};
+			}
+			else if constexpr (TypeTraits::IsSame<Value, uint16>)
+			{
+				const BitIndex<uint32> result = GetFirstSetIndex((uint32)value);
+				return BitIndex<uint16>{(uint16)result.m_value};
+			}
+			else if constexpr (TypeTraits::IsSame<Value, uint8>)
+			{
+				const BitIndex<uint32> result = GetFirstSetIndex((uint32)value);
+				return BitIndex<uint8>{(uint8)result.m_value};
+			}
+			else
+			{
+				static_unreachable("Unexpected type");
+			}
+#endif
+		}
+
 		Value bitIndex = 0u;
 		Value skippedBitCount = GetNumberOfTrailingZeros(value);
 		bitIndex += skippedBitCount;
 		value >>= skippedBitCount;
 		return BitIndex<Value>{Value((bitIndex + 1) * bool(value & 1u))};
 	}
-#endif
 
-#if COMPILER_GCC || COMPILER_CLANG
-	[[nodiscard]] FORCE_INLINE BitIndex<uint64> GetLastSetIndex(const uint64 value) noexcept
-	{
-		const uint64 index = 63 ^ __builtin_clzll(reinterpret_cast<const int64&>(value));
-		return BitIndex<uint64>{value != 0 ? index + 1 : 0};
-	}
-	[[nodiscard]] FORCE_INLINE BitIndex<uint32> GetLastSetIndex(const uint32 value) noexcept
-	{
-		const uint32 index = 31 ^ __builtin_clz(reinterpret_cast<const int32&>(value));
-		return BitIndex<uint32>{value != 0 ? index + 1 : 0};
-	}
-	[[nodiscard]] FORCE_INLINE BitIndex<uint16> GetLastSetIndex(const uint16 value) noexcept
-	{
-		const BitIndex<uint32> result = GetLastSetIndex((uint32)value);
-		return BitIndex<uint16>{(uint8)result.m_value};
-	}
-	[[nodiscard]] FORCE_INLINE BitIndex<uint8> GetLastSetIndex(const uint8 value) noexcept
-	{
-		const BitIndex<uint32> result = GetLastSetIndex((uint32)value);
-		return BitIndex<uint8>{(uint8)result.m_value};
-	}
-#else
 	template<typename Value>
-	[[nodiscard]] FORCE_INLINE BitIndex<Value> GetLastSetIndex(Value value) noexcept
+	[[nodiscard]] FORCE_INLINE constexpr BitIndex<Value> GetLastSetIndex(Value value) noexcept
 	{
+		if (IsConstantEvaluated())
+		{
+			if (value == 0)
+			{
+				return {};
+			}
+		}
+		else
+		{
+#if COMPILER_GCC || COMPILER_CLANG
+			if constexpr (TypeTraits::IsSame<Value, uint64>)
+			{
+				const uint64 index = 63 ^ __builtin_clzll(reinterpret_cast<const int64&>(value));
+				return BitIndex<uint64>{value != 0 ? index + 1 : 0};
+			}
+			else if constexpr (TypeTraits::IsSame<Value, uint32>)
+			{
+				const uint32 index = 31 ^ __builtin_clz(reinterpret_cast<const int32&>(value));
+				return BitIndex<uint32>{value != 0 ? index + 1 : 0};
+			}
+			else if constexpr (TypeTraits::IsSame<Value, uint16>)
+			{
+				const BitIndex<uint32> result = GetLastSetIndex((uint32)value);
+				return BitIndex<uint16>{(uint8)result.m_value};
+			}
+			else if constexpr (TypeTraits::IsSame<Value, uint8>)
+			{
+				const BitIndex<uint32> result = GetLastSetIndex((uint32)value);
+				return BitIndex<uint8>{(uint8)result.m_value};
+			}
+			else
+			{
+				static_unreachable("Unexpected type");
+			}
+#endif
+		}
+
 		Value bitIndex = 0u;
 		Value skippedBitCount = GetNumberOfLeadingZeros(value);
 		bitIndex += (sizeof(Value) * 8 - 1) - skippedBitCount;
 		value <<= skippedBitCount;
 		return BitIndex<Value>{Value((bitIndex + 1) * bool(value != 0))};
 	}
-#endif
 
 	template<typename Value>
 	struct SetBitsIterator
 	{
-		SetBitsIterator(const Value value)
+		constexpr SetBitsIterator(const Value value)
 			: m_value(value)
 		{
 		}
 
 		struct Iterator
 		{
-			Iterator() = default;
-			Iterator(const Value value, const Value bitIndex)
+			constexpr Iterator() = default;
+			constexpr Iterator(const Value value, const Value bitIndex)
 				: m_value(value)
 				, m_bitIndex(bitIndex)
 			{
 			}
 
-			[[nodiscard]] FORCE_INLINE bool operator==(const Iterator& other) const
+			[[nodiscard]] FORCE_INLINE constexpr bool operator==(const Iterator& other) const
 			{
 				return (m_value == other.m_value);
 			}
-			[[nodiscard]] FORCE_INLINE bool operator!=(const Iterator& other) const
+			[[nodiscard]] FORCE_INLINE constexpr bool operator!=(const Iterator& other) const
 			{
 				return !operator==(other);
 			}
-			[[nodiscard]] FORCE_INLINE bool operator<(const Iterator& other) const
+			[[nodiscard]] FORCE_INLINE constexpr bool operator<(const Iterator& other) const
 			{
 				return m_value < other.m_value;
 			}
-			[[nodiscard]] FORCE_INLINE bool operator<=(const Iterator& other) const
+			[[nodiscard]] FORCE_INLINE constexpr bool operator<=(const Iterator& other) const
 			{
 				return m_value <= other.m_value;
 			}
-			[[nodiscard]] FORCE_INLINE bool operator>(const Iterator& other) const
+			[[nodiscard]] FORCE_INLINE constexpr bool operator>(const Iterator& other) const
 			{
 				return m_value > other.m_value;
 			}
-			[[nodiscard]] FORCE_INLINE bool operator>=(const Iterator& other) const
+			[[nodiscard]] FORCE_INLINE constexpr bool operator>=(const Iterator& other) const
 			{
 				return m_value >= other.m_value;
 			}
 
-			FORCE_INLINE void operator++()
+			FORCE_INLINE constexpr void operator++()
 			{
 				Value value = m_value;
 				const Value skippedBitCount = GetNumberOfTrailingZeros(static_cast<Value>(value >> (Value)1u)) + (Value)1u;
 				m_bitIndex = Math::Min(Value(m_bitIndex + skippedBitCount), Value(sizeof(Value) * 8));
-				value >>= skippedBitCount;
+				value >>= Math::Min(skippedBitCount, Value(sizeof(Value) * 8 - 1));
 				m_value = value;
 			}
 
-			[[nodiscard]] FORCE_INLINE bool IsSet() const
+			[[nodiscard]] FORCE_INLINE constexpr bool IsSet() const
 			{
 				return m_value != 0;
 			}
 
-			[[nodiscard]] FORCE_INLINE uint8 operator*() const
+			[[nodiscard]] FORCE_INLINE constexpr uint8 operator*() const
 			{
 				Assert(m_value & 1);
 				return (uint8)m_bitIndex;
@@ -376,18 +473,18 @@ namespace ngine::Memory
 			Value m_bitIndex = 0;
 		};
 
-		[[nodiscard]] FORCE_INLINE Iterator begin() const
+		[[nodiscard]] FORCE_INLINE constexpr Iterator begin() const
 		{
 			Value value = m_value;
 
 			Value bitIndex = 0u;
 			Value skippedBitCount = GetNumberOfTrailingZeros(value);
 			bitIndex += skippedBitCount;
-			value >>= skippedBitCount;
+			value >>= Math::Min(skippedBitCount, Value(sizeof(Value) * 8 - 1));
 
 			return {value, bitIndex};
 		}
-		[[nodiscard]] FORCE_INLINE Iterator end() const
+		[[nodiscard]] FORCE_INLINE constexpr Iterator end() const
 		{
 			return {0, sizeof(Value) * 8};
 		}
@@ -396,13 +493,13 @@ namespace ngine::Memory
 	};
 
 	template<typename Value>
-	[[nodiscard]] FORCE_INLINE SetBitsIterator<Value> GetSetBitsIterator(const Value value)
+	[[nodiscard]] FORCE_INLINE constexpr SetBitsIterator<Value> GetSetBitsIterator(const Value value)
 	{
 		return {value};
 	}
 
 	template<typename Value>
-	[[nodiscard]] FORCE_INLINE SetBitsIterator<Value> GetUnsetBitsIterator(const Value value)
+	[[nodiscard]] FORCE_INLINE constexpr SetBitsIterator<Value> GetUnsetBitsIterator(const Value value)
 	{
 		return {Value(~value)};
 	}
@@ -410,47 +507,47 @@ namespace ngine::Memory
 	template<typename Value>
 	struct SetBitRangesIterator
 	{
-		SetBitRangesIterator(const Value value)
+		constexpr SetBitRangesIterator(const Value value)
 			: m_value(value)
 		{
 		}
 
 		struct Iterator
 		{
-			Iterator() = default;
-			Iterator(const Value value, const Value bitIndex, const Value contiguousSetBitsCount)
+			constexpr Iterator() = default;
+			constexpr Iterator(const Value value, const Value bitIndex, const Value contiguousSetBitsCount)
 				: m_value(value)
 				, m_bitIndex(bitIndex)
 				, m_contiguousSetBitsCount(contiguousSetBitsCount)
 			{
 			}
 
-			[[nodiscard]] FORCE_INLINE bool operator==(const Iterator& other) const
+			[[nodiscard]] FORCE_INLINE constexpr bool operator==(const Iterator& other) const
 			{
 				return (m_bitIndex == other.m_bitIndex);
 			}
-			[[nodiscard]] FORCE_INLINE bool operator!=(const Iterator& other) const
+			[[nodiscard]] FORCE_INLINE constexpr bool operator!=(const Iterator& other) const
 			{
 				return !operator==(other);
 			}
-			[[nodiscard]] FORCE_INLINE bool operator<(const Iterator& other) const
+			[[nodiscard]] FORCE_INLINE constexpr bool operator<(const Iterator& other) const
 			{
 				return m_bitIndex < other.m_bitIndex;
 			}
-			[[nodiscard]] FORCE_INLINE bool operator<=(const Iterator& other) const
+			[[nodiscard]] FORCE_INLINE constexpr bool operator<=(const Iterator& other) const
 			{
 				return m_bitIndex <= other.m_bitIndex;
 			}
-			[[nodiscard]] FORCE_INLINE bool operator>(const Iterator& other) const
+			[[nodiscard]] FORCE_INLINE constexpr bool operator>(const Iterator& other) const
 			{
 				return m_bitIndex > other.m_bitIndex;
 			}
-			[[nodiscard]] FORCE_INLINE bool operator>=(const Iterator& other) const
+			[[nodiscard]] FORCE_INLINE constexpr bool operator>=(const Iterator& other) const
 			{
 				return m_bitIndex >= other.m_bitIndex;
 			}
 
-			FORCE_INLINE void operator++()
+			FORCE_INLINE constexpr void operator++()
 			{
 				Value value = m_value;
 				// Skip leading zeroes
@@ -466,7 +563,7 @@ namespace ngine::Memory
 				m_contiguousSetBitsCount = setBitCount;
 			}
 
-			[[nodiscard]] FORCE_INLINE Math::Range<Value> operator*() const
+			[[nodiscard]] FORCE_INLINE constexpr Math::Range<Value> operator*() const
 			{
 				Assert(m_bitIndex != sizeof(Value) * 8);
 				const Value bitIndex = m_bitIndex;
@@ -478,7 +575,7 @@ namespace ngine::Memory
 			Value m_contiguousSetBitsCount = 0;
 		};
 
-		[[nodiscard]] FORCE_INLINE Iterator begin() const
+		[[nodiscard]] FORCE_INLINE constexpr Iterator begin() const
 		{
 			Value value = m_value;
 			Value currentIndex = 0;
@@ -506,7 +603,7 @@ namespace ngine::Memory
 				return {0, sizeof(Value) * 8, 0};
 			}
 		}
-		[[nodiscard]] FORCE_INLINE Iterator end() const
+		[[nodiscard]] FORCE_INLINE constexpr Iterator end() const
 		{
 			return {0, sizeof(Value) * 8, 0};
 		}
@@ -515,7 +612,7 @@ namespace ngine::Memory
 	};
 
 	template<typename Value>
-	[[nodiscard]] FORCE_INLINE SetBitRangesIterator<Value> GetSetBitRangesIterator(const Value value)
+	[[nodiscard]] FORCE_INLINE constexpr SetBitRangesIterator<Value> GetSetBitRangesIterator(const Value value)
 	{
 		return {value};
 	}
@@ -523,46 +620,46 @@ namespace ngine::Memory
 	template<typename Value>
 	struct SetBitsReverseIterator
 	{
-		SetBitsReverseIterator(const Value value)
+		constexpr SetBitsReverseIterator(const Value value)
 			: m_value(value)
 		{
 		}
 
 		struct Iterator
 		{
-			Iterator() = default;
-			Iterator(const Value value, const Value bitIndex)
+			constexpr Iterator() = default;
+			constexpr Iterator(const Value value, const Value bitIndex)
 				: m_value(value)
 				, m_bitIndex(bitIndex)
 			{
 			}
 
-			[[nodiscard]] FORCE_INLINE bool operator==(const Iterator& other) const
+			[[nodiscard]] FORCE_INLINE constexpr bool operator==(const Iterator& other) const
 			{
 				return (m_value == other.m_value);
 			}
-			[[nodiscard]] FORCE_INLINE bool operator!=(const Iterator& other) const
+			[[nodiscard]] FORCE_INLINE constexpr bool operator!=(const Iterator& other) const
 			{
 				return !operator==(other);
 			}
-			[[nodiscard]] FORCE_INLINE bool operator<(const Iterator& other) const
+			[[nodiscard]] FORCE_INLINE constexpr bool operator<(const Iterator& other) const
 			{
 				return m_value < other.m_value;
 			}
-			[[nodiscard]] FORCE_INLINE bool operator<=(const Iterator& other) const
+			[[nodiscard]] FORCE_INLINE constexpr bool operator<=(const Iterator& other) const
 			{
 				return m_value <= other.m_value;
 			}
-			[[nodiscard]] FORCE_INLINE bool operator>(const Iterator& other) const
+			[[nodiscard]] FORCE_INLINE constexpr bool operator>(const Iterator& other) const
 			{
 				return m_value > other.m_value;
 			}
-			[[nodiscard]] FORCE_INLINE bool operator>=(const Iterator& other) const
+			[[nodiscard]] FORCE_INLINE constexpr bool operator>=(const Iterator& other) const
 			{
 				return m_value >= other.m_value;
 			}
 
-			FORCE_INLINE void operator++()
+			FORCE_INLINE constexpr void operator++()
 			{
 				Value value = m_value;
 				const Value skippedBitCount = GetNumberOfLeadingZeros(static_cast<Value>(value << (Value)1u)) + 1u;
@@ -571,12 +668,12 @@ namespace ngine::Memory
 				m_value = value;
 			}
 
-			[[nodiscard]] bool IsSet() const
+			[[nodiscard]] constexpr bool IsSet() const
 			{
 				return m_value != 0;
 			}
 
-			[[nodiscard]] FORCE_INLINE uint8 operator*() const
+			[[nodiscard]] FORCE_INLINE constexpr uint8 operator*() const
 			{
 				Assert(m_value != 0);
 				return (uint8)m_bitIndex;
@@ -586,7 +683,7 @@ namespace ngine::Memory
 			Value m_bitIndex = 0;
 		};
 
-		[[nodiscard]] FORCE_INLINE Iterator begin() const
+		[[nodiscard]] FORCE_INLINE constexpr Iterator begin() const
 		{
 			Value value = m_value;
 
@@ -597,7 +694,7 @@ namespace ngine::Memory
 
 			return {value, bitIndex};
 		}
-		[[nodiscard]] FORCE_INLINE Iterator end() const
+		[[nodiscard]] FORCE_INLINE constexpr Iterator end() const
 		{
 			return {0, sizeof(Value) * 8};
 		}
@@ -606,19 +703,19 @@ namespace ngine::Memory
 	};
 
 	template<typename Value>
-	[[nodiscard]] FORCE_INLINE SetBitsReverseIterator<Value> GetSetBitsReverseIterator(const Value value)
+	[[nodiscard]] FORCE_INLINE constexpr SetBitsReverseIterator<Value> GetSetBitsReverseIterator(const Value value)
 	{
 		return {value};
 	}
 
 	template<typename Value>
-	[[nodiscard]] FORCE_INLINE SetBitsReverseIterator<Value> GetUnsetBitsReverseIterator(const Value value)
+	[[nodiscard]] FORCE_INLINE constexpr SetBitsReverseIterator<Value> GetUnsetBitsReverseIterator(const Value value)
 	{
 		return {Value(~value)};
 	}
 
 	template<typename Value, typename Callback>
-	FORCE_INLINE void IterateSetBits(Value value, Callback callback) noexcept
+	FORCE_INLINE constexpr void IterateSetBits(Value value, Callback callback) noexcept
 	{
 		for (const uint8 bitIndex : GetSetBitsIterator(value))
 		{
@@ -630,7 +727,7 @@ namespace ngine::Memory
 	}
 
 	template<typename Value>
-	[[nodiscard]] FORCE_INLINE PURE_STATICS Value ClearTrailingSetBits(Value value, const uint8 numBitsToClear) noexcept
+	[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr Value ClearTrailingSetBits(Value value, const uint8 numBitsToClear) noexcept
 	{
 		for (uint8 i = 0; i < numBitsToClear; ++i)
 		{
@@ -641,7 +738,7 @@ namespace ngine::Memory
 	}
 
 	template<typename Value>
-	[[nodiscard]] PURE_STATICS Value ClearLeadingSetBits(Value value, const uint8 numBitsToClear) noexcept
+	[[nodiscard]] PURE_STATICS constexpr Value ClearLeadingSetBits(Value value, const uint8 numBitsToClear) noexcept
 	{
 		for (uint8 i = 0; i < numBitsToClear; ++i)
 		{
@@ -652,50 +749,56 @@ namespace ngine::Memory
 	}
 
 	template<typename Value>
-	[[nodiscard]] FORCE_INLINE PURE_STATICS Value SetBitRange(const Value value, const Math::Range<Value> range) noexcept
+	[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr Value SetBitRange(const Value value, const Math::Range<Value> range) noexcept
 	{
 		const Value mask = Math::NumericLimits<Value>::Max >> ((sizeof(Value) * 8) - range.GetSize());
 		return Value(value | (mask << range.GetMinimum()));
 	}
 
 	template<typename Value>
-	[[nodiscard]] FORCE_INLINE PURE_STATICS Value SetBitRange(const Math::Range<Value> range) noexcept
+	[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr Value SetBitRange(const Math::Range<Value> range) noexcept
 	{
 		const Value mask = Math::NumericLimits<Value>::Max >> ((sizeof(Value) * 8) - range.GetSize());
 		return Value(mask << range.GetMinimum());
 	}
 
-	[[nodiscard]] FORCE_INLINE PURE_STATICS uint32 ReverseBits(uint32 value) noexcept
+	[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr uint32 ReverseBits(uint32 value) noexcept
 	{
 #if PLATFORM_ARM
-		return __builtin_arm_rbit(value);
-#else
+		if (!IsConstantEvaluated())
+		{
+			return __builtin_arm_rbit(value);
+		}
+#endif
 		value = ((value >> 1) & 0x55555555u) | ((value & 0x55555555u) << 1);
 		value = ((value >> 2) & 0x33333333u) | ((value & 0x33333333u) << 2);
 		value = ((value >> 4) & 0x0f0f0f0fu) | ((value & 0x0f0f0f0fu) << 4);
 		value = ((value >> 8) & 0x00ff00ffu) | ((value & 0x00ff00ffu) << 8);
 		value = ((value >> 16) & 0xffffu) | ((value & 0xffffu) << 16);
 		return value;
-#endif
 	}
-	[[nodiscard]] FORCE_INLINE PURE_STATICS uint64 ReverseBits(const uint64 value) noexcept
+	[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr uint64 ReverseBits(const uint64 value) noexcept
 	{
 		return (((uint64)ReverseBits(uint32(value))) << 32u) | ReverseBits(uint32(value >> 32u));
 	}
-	[[nodiscard]] FORCE_INLINE PURE_STATICS uint8 ReverseBits(const uint8 value) noexcept
+	[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr uint8 ReverseBits(const uint8 value) noexcept
 	{
 #if PLATFORM_ARM
-		return __builtin_arm_rbit(uint32(value)) >> 24u;
-#else
+		if (!IsConstantEvaluated())
+		{
+			return __builtin_arm_rbit(uint32(value)) >> 24u;
+		}
+#endif
 		return uint8((value * 0x0202020202ULL & 0x010884422010ULL) % 1023);
-#endif
 	}
-	[[nodiscard]] FORCE_INLINE PURE_STATICS uint16 ReverseBits(const uint16 value) noexcept
+	[[nodiscard]] FORCE_INLINE PURE_STATICS constexpr uint16 ReverseBits(const uint16 value) noexcept
 	{
 #if PLATFORM_ARM
-		return __builtin_arm_rbit(uint32(value)) >> 16;
-#else
-		return uint16(((uint16)ReverseBits(uint8(value))) << 8u) | ReverseBits(uint8(value >> 8u));
+		if (!IsConstantEvaluated())
+		{
+			return __builtin_arm_rbit(uint32(value)) >> 16;
+		}
 #endif
+		return uint16(((uint16)ReverseBits(uint8(value))) << 8u) | ReverseBits(uint8(value >> 8u));
 	}
 }

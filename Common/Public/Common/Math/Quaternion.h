@@ -535,6 +535,16 @@ namespace ngine::Math
 		template<typename S = T, typename E = EnableIf<Serialization::Internal::CanWrite<S> && TypeTraits::IsConvertibleTo<S, double>, bool>>
 		bool Serialize(Serialization::Writer serializer) const;
 
+		[[nodiscard]] static constexpr uint32 CalculateCompressedDataSize()
+		{
+			// One bit to indicate whether the maximum value is 1
+			// Two bits to indicate maximum index
+			// 12 bits per non-max axis
+			return 1 + 2 + 12 * 3;
+		}
+		bool Compress(BitView& target) const;
+		bool Decompress(ConstBitView& source);
+
 		union
 		{
 			Vector4Type m_vector;

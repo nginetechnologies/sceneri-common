@@ -5,6 +5,7 @@
 #include <Common/Reflection/TypeDefinition.h>
 #include <Common/Memory/Invalid.h>
 #include <Common/Memory/AddressOf.h>
+#include <Common/Serialization/ForwardDeclarations/Writer.h>
 #include <Common/Platform/TrivialABI.h>
 
 namespace ngine
@@ -164,6 +165,8 @@ namespace ngine
 		{
 			return IsValid();
 		}
+
+		bool Serialize(Serialization::Writer) const;
 	private:
 		void* m_pData = nullptr;
 		Reflection::TypeDefinition m_typeDefinition;
@@ -244,6 +247,7 @@ namespace ngine
 		using AnyView::IsValid;
 		using AnyView::IsInvalid;
 		using AnyView::operator bool;
+		using AnyView::Serialize;
 
 		[[nodiscard]] PURE_STATICS const void* GetData() const
 		{

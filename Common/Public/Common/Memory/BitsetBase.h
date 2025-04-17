@@ -9,6 +9,7 @@
 #include <Common/Memory/GetIntegerType.h>
 #include <Common/Memory/Containers/ArrayView.h>
 #include <Common/Memory/Containers/ContainerCommon.h>
+#include <Common/Memory/Containers/ForwardDeclarations/BitView.h>
 #include <Common/Platform/TrivialABI.h>
 
 namespace ngine
@@ -898,7 +899,7 @@ namespace ngine
 						view--;
 						bitIterator = (RawBlockType)view.GetLastElement();
 						it = bitIterator.begin();
-						index -= BitsPerBlock;
+index -= BitsPerBlock;
 					}
 
 					return {
@@ -916,7 +917,7 @@ namespace ngine
 				ConstRestrictedDynamicBlockView m_view;
 				BitIndexType m_bitIndex;
 			};
-		public:
+			
 			[[nodiscard]] SetBitsIterator GetSetBitsIterator(const BitIndexType startIndex, const BitIndexType count) const
 			{
 				return SetBitsIterator{
@@ -1058,6 +1059,13 @@ namespace ngine
 			{
 				return m_allocator.GetRestrictedView()[index];
 			}
+
+			[[nodiscard]] static constexpr uint32 CalculateCompressedDataSize()
+			{
+				return MaximumCount;
+			}
+			bool Compress(BitView& target) const;
+			bool Decompress(ConstBitView& source);
 		protected:
 			void Grow(const BitIndexType bitCount)
 			{

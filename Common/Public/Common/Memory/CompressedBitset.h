@@ -568,7 +568,7 @@ namespace ngine
 					case ContainerType::Bitset:
 						return {(BitIndexType)(offset + *m_containers[containerIndex].m_pBitset->GetLastSetIndex() + 1)};
 					case ContainerType::Ranges:
-						return {(BitIndexType)(offset + m_containers[containerIndex].m_ranges[0].GetMaximum() + 1)};
+						return {(BitIndexType)(offset + m_containers[containerIndex].m_ranges.GetLastElement().GetMaximum() + 1)};
 				}
 				offset -= MaximumBitsPerContainer;
 			}

@@ -1,4 +1,5 @@
 #include "Guid.h"
+#include "Asset/Guid.h"
 
 #include <Common/Memory/Containers/FlatString.h>
 #include <Common/Memory/Containers/Format/String.h>
@@ -6,6 +7,9 @@
 #include <Common/Math/Random.h>
 #include <Common/Time/Timestamp.h>
 #include <Common/Reflection/TypeDefinition.h>
+#include <Common/Reflection/Type.h>
+#include <Common/Reflection/Registry.inl>
+#include <Common/Storage/Compression/Identifier.h>
 
 #include <Common/Serialization/Guid.h>
 
@@ -81,4 +85,22 @@ namespace ngine
 			return hasher(typeDefinition.m_manager);
 		}
 	}
+
+	template struct TIdentifier<uint32, 1>;
+	template struct TIdentifier<uint32, 2>;
+	template struct TIdentifier<uint32, 3>;
+	template struct TIdentifier<uint32, 4>;
+	template struct TIdentifier<uint32, 5>;
+	template struct TIdentifier<uint32, 6>;
+	template struct TIdentifier<uint32, 7>;
+	template struct TIdentifier<uint32, 8>;
+	template struct TIdentifier<uint32, 9>;
+	template struct TIdentifier<uint32, 10>;
+	template struct TIdentifier<uint32, 11>;
+	template struct TIdentifier<uint32, 12>;
+	template struct TIdentifier<uint32, 13>;
+	template struct TIdentifier<uint32, 14>;
+	template struct TIdentifier<uint32, 15>;
+	template struct TIdentifier<uint32, 16>;
+	template struct TIdentifier<uint32, 17>;
 }

@@ -3,7 +3,10 @@
 #include <Common/Serialization/Reader.h>
 #include <Common/Serialization/Writer.h>
 #include <Common/Serialization/Guid.h>
+#include <Common/Reflection/Registry.h>
+#include <Common/Compression/Compressor.h>
 #include <Common/TypeTraits/TypeName.h>
+#include <Common/System/Query.h>
 
 namespace ngine::Reflection
 {
@@ -149,6 +152,62 @@ namespace ngine::Reflection
 		return targetCapacity;
 	}
 
+	bool TypeDefinition::Serialize(const Serialization::Reader reader)
+	{
+		if (reader.IsString())
+		{
+			const Guid guid = *reader.ReadInPlace<Guid>();
+			Reflection::Registry& registry = System::Get<Reflection::Registry>();
+			if (Optional<const TypeDefinition*> pDefinition = registry.FindTypeDefinition(guid))
+			{
+				*this = *pDefinition;
+				return true;
+			}
+		}
+		else
+		{
+			Assert(reader.IsObject());
+			const Guid guid = reader.ReadWithDefaultValue<Guid>("guid", Guid{});
+			if (guid.IsValid())
+			{
+				Assert(reader.ReadWithDefaultValue<bool>("pointer", false), "No other flags supported at the moment");
+
+				Reflection::Registry& registry = System::Get<Reflection::Registry>();
+				if (Optional<const TypeDefinition*> pDefinition = registry.FindTypeDefinition(guid))
+				{
+					*this = pDefinition->GetPointerTypeDefinition();
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	bool TypeDefinition::Serialize(Serialization::Writer writer) const
+	{
+		Reflection::Registry& registry = System::Get<Reflection::Registry>();
+		Guid typeGuid = registry.FindTypeDefinitionGuid(*this);
+		if (typeGuid.IsValid())
+		{
+			return writer.SerializeInPlace(typeGuid);
+		}
+
+		// Support serializing pointers
+		const TypeDefinition valueTypeDefinition = GetValueTypeDefinition();
+		if (valueTypeDefinition != *this)
+		{
+			typeGuid = registry.FindTypeDefinitionGuid(valueTypeDefinition);
+			if (typeGuid.IsValid())
+			{
+				writer.Serialize("guid", typeGuid);
+				writer.Serialize("pointer", true);
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	bool TypeDefinition::SerializeStoredObject(const ConstStoredType target, Serialization::Writer& serializer) const
 	{
 		if (!IsValid())
@@ -181,6 +240,63 @@ namespace ngine::Reflection
 		return argument.m_storedObjectArgs.pObject != nullptr;
 	}
 
+	bool TypeDefinition::HasDynamicCompressedData(EnumFlags<Reflection::PropertyFlags> requiredFlags) const
+	{
+		bool result;
+		OperationArgument argument = {*this};
+		argument.m_typeArgs[0] = &requiredFlags;
+		argument.m_typeArgs[1] = &result;
+		m_manager(Operation::GetHasDynamicCompressedData, argument);
+		return result;
+	}
+
+	uint32 TypeDefinition::CalculateFixedCompressedDataSize(EnumFlags<Reflection::PropertyFlags> requiredFlags) const
+	{
+		uint32 result;
+		OperationArgument argument = {*this};
+		argument.m_typeArgs[0] = &requiredFlags;
+		argument.m_typeArgs[1] = &result;
+		m_manager(Operation::CalculateFixedCompressedDataSize, argument);
+		return result;
+	}
+
+	uint32 TypeDefinition::CalculateObjectDynamicCompressedDataSize(
+		const ConstStoredType source, EnumFlags<Reflection::PropertyFlags> requiredFlags
+	) const
+	{
+		uint32 result;
+		OperationArgument argument = {*this};
+		argument.m_storedObjectArgs.pObject = const_cast<StoredType>(source);
+		argument.m_storedObjectArgs.m_args[0] = &requiredFlags;
+		argument.m_storedObjectArgs.m_args[1] = &result;
+		m_manager(Operation::CalculateObjectDynamicCompressedDataSize, argument);
+		return result;
+	}
+
+	bool TypeDefinition::CompressStoredObject(
+		const ConstStoredType source, BitView& targetView, EnumFlags<Reflection::PropertyFlags> requiredFlags
+	) const
+	{
+		OperationArgument argument = {*this};
+		argument.m_storedObjectArgs.pObject = const_cast<StoredType>(source);
+		argument.m_storedObjectArgs.m_args[0] = &targetView;
+		argument.m_storedObjectArgs.m_args[1] = &requiredFlags;
+		m_manager(Operation::CompressStoredObject, argument);
+		return argument.m_storedObjectArgs.pObject != nullptr;
+	}
+
+	bool TypeDefinition::DecompressStoredObject(
+		const StoredType target, ConstBitView& sourceView, EnumFlags<Reflection::PropertyFlags> requiredFlags
+	) const
+	{
+		OperationArgument argument = {*this};
+		argument.m_storedObjectArgs.pObject = target;
+		argument.m_storedObjectArgs.m_args[0] = &sourceView;
+		argument.m_storedObjectArgs.m_args[1] = &requiredFlags;
+		m_manager(Operation::DecompressStoredObject, argument);
+		return argument.m_storedObjectArgs.pObject != nullptr;
+	}
+
 	namespace Internal
 	{
 		void GenericTypeDefinition<void>::Manage(const Operation operation, OperationArgument& argument)
@@ -189,6 +305,13 @@ namespace ngine::Reflection
 			{
 				case Operation::GetTypeSize:
 					*reinterpret_cast<uint32*>(argument.m_typeArgs[0]) = 0;
+					break;
+				case Operation::GetHasDynamicCompressedData:
+					*reinterpret_cast<bool*>(argument.m_typeArgs[1]) = false;
+					break;
+				case Operation::CalculateFixedCompressedDataSize:
+				case Operation::CalculateObjectDynamicCompressedDataSize:
+					*reinterpret_cast<uint32*>(argument.m_typeArgs[1]) = 0;
 					break;
 				case Operation::GetTypeAlignment:
 					*reinterpret_cast<uint16*>(argument.m_typeArgs[0]) = 1;
@@ -243,6 +366,10 @@ namespace ngine::Reflection
 				case Operation::SerializeStoredObject:
 				case Operation::DeserializeStoredObject:
 				case Operation::DeserializeConstructStoredObject:
+					argument.m_storedObjectArgs.pObject = nullptr;
+					break;
+				case Operation::CompressStoredObject:
+				case Operation::DecompressStoredObject:
 					argument.m_storedObjectArgs.pObject = nullptr;
 					break;
 			}
