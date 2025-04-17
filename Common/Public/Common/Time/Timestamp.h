@@ -63,6 +63,18 @@ namespace ngine::Time
 		{
 			return m_time / 1000000000ull;
 		}
+		[[nodiscard]] FORCE_INLINE constexpr uint64 GetMinutes() const
+		{
+			return GetSeconds() / 60ull;
+		}
+		[[nodiscard]] FORCE_INLINE constexpr uint64 GetHours() const
+		{
+			return GetMinutes() / 60ull;
+		}
+		[[nodiscard]] FORCE_INLINE constexpr uint64 GetDays() const
+		{
+			return GetHours() / 24ull;
+		}
 
 		[[nodiscard]] FORCE_INLINE constexpr DurationType GetDuration() const
 		{
@@ -172,6 +184,9 @@ namespace ngine::Time
 
 		//! Returns a string with the timestamp in RFC3339 format
 		[[nodiscard]] FlatString<40> ToString() const;
+		//! Returns a string focusing on the minimum representable value, i.e. "40 seconds", "20 minutes" etc.
+		[[nodiscard]] String ToRelativeString() const;
+
 		[[nodiscard]] String Format(const ConstStringView format) const;
 	protected:
 		explicit constexpr Timestamp(const uint64 timeInNanoseconds)

@@ -77,7 +77,7 @@ namespace ngine
 		}
 		FORCE_INLINE void Clear(const EnumFlagsType other)
 		{
-			m_flags &= ~other.GetUnderlyingValue();
+			m_flags &= (UnderlyingType)~other.GetUnderlyingValue();
 		}
 		[[nodiscard]] FORCE_INLINE EnumFlagsType FetchClear()
 		{
@@ -152,7 +152,7 @@ namespace ngine
 
 		void ClearFlags(const EnumFlagsType other)
 		{
-			m_flags &= ~other.GetUnderlyingValue();
+			m_flags &= (UnderlyingType)~other.GetUnderlyingValue();
 		}
 
 		FORCE_INLINE bool TryClearFlags(const EnumFlagsType other)

@@ -2,6 +2,7 @@
 
 #include <Common/Platform/ForceInline.h>
 
+#include <Common/Guid.h>
 #include <Common/Time/ForwardDeclarations/Duration.h>
 #include <Common/Memory/Containers/ForwardDeclarations/FlatString.h>
 #include <Common/Serialization/ForwardDeclarations/Reader.h>
@@ -15,6 +16,8 @@ namespace ngine::Time
 	struct Duration
 	{
 		using UnitType = Type;
+
+		inline static constexpr Guid TypeGuid = "{49d6be72-ccba-400f-b84d-14151cbbb97f}"_guid;
 
 		FORCE_INLINE Duration() = default;
 

@@ -15,8 +15,13 @@ namespace ngine
 		{
 			if (currentElement.IsString())
 			{
-				guid = Guid::TryParse(ConstStringView(currentElement.GetString(), static_cast<uint32>(currentElement.GetStringLength())));
-				return guid.IsValid();
+				const Guid parsedGuid =
+					Guid::TryParse(ConstStringView(currentElement.GetString(), static_cast<uint32>(currentElement.GetStringLength())));
+				if (parsedGuid.IsValid())
+				{
+					guid = parsedGuid;
+					return true;
+				}
 			}
 			else // if(currentElement.IsNull())
 			{
@@ -24,10 +29,7 @@ namespace ngine
 				return true;
 			}
 		}
-		else
-		{
-			return false;
-		}
+		return false;
 	}
 
 	FORCE_INLINE bool Serialize(const Guid& guid, Serialization::Writer serializer)

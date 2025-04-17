@@ -728,16 +728,22 @@ namespace ngine::Tests
 			EXPECT_FALSE(bits.IsSet(0));
 			EXPECT_FALSE(bits.IsSet(1));
 			EXPECT_EQ(bits.GetNumberOfSetBits(), 0);
+			EXPECT_FALSE(bits.GetFirstSetIndex().IsValid());
+			EXPECT_FALSE(bits.GetLastSetIndex().IsValid());
 			bits.Set(1);
 			EXPECT_FALSE(bits.IsSet(0));
 			EXPECT_TRUE(bits.IsSet(1));
 			EXPECT_EQ(bits.GetNumberOfSetBits(), 1);
+			EXPECT_EQ(*bits.GetFirstSetIndex(), 1);
+			EXPECT_EQ(*bits.GetLastSetIndex(), 1);
 
 			EXPECT_FALSE(bits.IsSet(0));
 			bits.Set(0);
 			EXPECT_TRUE(bits.IsSet(0));
 			EXPECT_TRUE(bits.IsSet(1));
 			EXPECT_EQ(bits.GetNumberOfSetBits(), 2);
+			EXPECT_EQ(*bits.GetFirstSetIndex(), 0);
+			EXPECT_EQ(*bits.GetLastSetIndex(), 1);
 
 			EXPECT_FALSE(bits.IsSet(2));
 			bits.Set(2);
@@ -746,6 +752,8 @@ namespace ngine::Tests
 			EXPECT_TRUE(bits.IsSet(2));
 			EXPECT_FALSE(bits.IsSet(3));
 			EXPECT_EQ(bits.GetNumberOfSetBits(), 3);
+			EXPECT_EQ(*bits.GetFirstSetIndex(), 0);
+			EXPECT_EQ(*bits.GetLastSetIndex(), 2);
 
 			bits.Set(2);
 			EXPECT_TRUE(bits.IsSet(1));
@@ -758,6 +766,8 @@ namespace ngine::Tests
 			EXPECT_TRUE(bits.IsSet(4));
 			EXPECT_FALSE(bits.IsSet(3));
 			EXPECT_EQ(bits.GetNumberOfSetBits(), 4);
+			EXPECT_EQ(*bits.GetFirstSetIndex(), 0);
+			EXPECT_EQ(*bits.GetLastSetIndex(), 4);
 
 			bits.Set(3);
 			EXPECT_TRUE(bits.IsSet(1));
@@ -765,6 +775,8 @@ namespace ngine::Tests
 			EXPECT_TRUE(bits.IsSet(3));
 			EXPECT_TRUE(bits.IsSet(4));
 			EXPECT_EQ(bits.GetNumberOfSetBits(), 5);
+			EXPECT_EQ(*bits.GetFirstSetIndex(), 0);
+			EXPECT_EQ(*bits.GetLastSetIndex(), 4);
 
 			bits.Clear(2);
 			EXPECT_TRUE(bits.IsSet(0));
@@ -773,6 +785,9 @@ namespace ngine::Tests
 			EXPECT_TRUE(bits.IsSet(3));
 			EXPECT_TRUE(bits.IsSet(4));
 			EXPECT_EQ(bits.GetNumberOfSetBits(), 4);
+			EXPECT_EQ(*bits.GetFirstSetIndex(), 0);
+			EXPECT_EQ(*bits.GetLastSetIndex(), 4);
+
 			bits.Clear(2);
 			EXPECT_TRUE(bits.IsSet(0));
 			EXPECT_TRUE(bits.IsSet(1));
@@ -780,6 +795,8 @@ namespace ngine::Tests
 			EXPECT_TRUE(bits.IsSet(3));
 			EXPECT_TRUE(bits.IsSet(4));
 			EXPECT_EQ(bits.GetNumberOfSetBits(), 4);
+			EXPECT_EQ(*bits.GetFirstSetIndex(), 0);
+			EXPECT_EQ(*bits.GetLastSetIndex(), 4);
 
 			bits.Clear(3);
 			EXPECT_TRUE(bits.IsSet(0));
@@ -788,6 +805,12 @@ namespace ngine::Tests
 			EXPECT_FALSE(bits.IsSet(3));
 			EXPECT_TRUE(bits.IsSet(4));
 			EXPECT_EQ(bits.GetNumberOfSetBits(), 3);
+			EXPECT_EQ(*bits.GetFirstSetIndex(), 0);
+			EXPECT_EQ(*bits.GetLastSetIndex(), 4);
+
+			bits.Clear(4);
+			EXPECT_EQ(*bits.GetFirstSetIndex(), 0);
+			EXPECT_EQ(*bits.GetLastSetIndex(), 1);
 		}
 	}
 }

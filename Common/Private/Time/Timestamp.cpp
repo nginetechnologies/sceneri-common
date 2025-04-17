@@ -57,6 +57,42 @@ namespace ngine::Time
 		return FlatString<40>().Format("{:%FT%T%Ez}", fmt::localtime(GetSeconds()));
 	}
 
+	String Timestamp::ToRelativeString() const
+	{
+		const uint64 nanoseconds = GetNanoseconds();
+		if (nanoseconds < 1000000)
+		{
+			return String().Format("{} {}", nanoseconds, nanoseconds > 1 ? "nanoseconds" : "nanosecond");
+		}
+
+		const uint64 milliseconds = GetMilliseconds();
+		if (milliseconds < 1000)
+		{
+			return String().Format("{} {}", milliseconds, milliseconds > 1 ? "milliseconds" : "millisecond");
+		}
+
+		const uint64 seconds = GetSeconds();
+		if (seconds < 60)
+		{
+			return String().Format("{} {}", seconds, seconds > 1 ? "seconds" : "second");
+		}
+
+		const uint64 minutes = GetMinutes();
+		if (minutes < 60)
+		{
+			return String().Format("{} {}", minutes, minutes > 1 ? "minutes" : "minute");
+		}
+
+		const uint64 hours = GetHours();
+		if (hours < 24)
+		{
+			return String().Format("{} {}", hours, hours > 1 ? "hours" : "hour");
+		}
+
+		const uint64 days = GetDays();
+		return String().Format("{} {}", days, days > 1 ? "days" : "day");
+	}
+
 	String Timestamp::Format(const ConstStringView format) const
 	{
 		return FlatString<40>().Format(format, fmt::localtime(GetSeconds()));

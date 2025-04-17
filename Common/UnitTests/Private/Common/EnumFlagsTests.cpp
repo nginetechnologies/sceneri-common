@@ -68,4 +68,27 @@ namespace ngine::Tests
 		EXPECT_FALSE(EnumFlags(TestFlags{}).AreAllSet(TestFlags::Flag2));
 		EXPECT_FALSE(EnumFlags(TestFlags::Flag2 | TestFlags::Flag3).AreAllSet(TestFlags::Flag1 | TestFlags::Flag3));
 	}
+
+	UNIT_TEST(EnumFlags, Iterator)
+	{
+		const EnumFlags<TestFlags> allFlags = TestFlags::Flag1 | TestFlags::Flag2 | TestFlags::Flag3;
+		EnumFlags<TestFlags> resultingFlags;
+		for (const TestFlags flag : allFlags)
+		{
+			resultingFlags |= flag;
+		}
+		EXPECT_TRUE(allFlags == resultingFlags);
+
+		constexpr auto constexprTest = []() constexpr -> bool
+		{
+			constexpr EnumFlags<TestFlags> allFlags = TestFlags::Flag1 | TestFlags::Flag2 | TestFlags::Flag3;
+			EnumFlags<TestFlags> resultingFlags;
+			for (const TestFlags flag : allFlags)
+			{
+				resultingFlags |= flag;
+			}
+			return resultingFlags == allFlags;
+		};
+		static_assert(constexprTest());
+	}
 }

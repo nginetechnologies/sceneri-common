@@ -250,34 +250,46 @@ namespace ngine::Tests
 		{
 			const uint64 value = 0b0001000000000100000000000000000000000000000000000000000000000000;
 			EXPECT_EQ(Memory::GetNumberOfLeadingZeros(value), 3u);
+			static_assert(Memory::GetNumberOfLeadingZeros(value) == 3);
 			const uint64 zeroValue = 0b0000000000000000000000000000000000000000000000000000000000000000;
 			EXPECT_EQ(Memory::GetNumberOfLeadingZeros(zeroValue), 64u);
+			static_assert(Memory::GetNumberOfLeadingZeros(zeroValue) == 64u);
 			const uint64 allValue = 0b1111111111111111111111111111111111111111111111111111111111111111;
 			EXPECT_EQ(Memory::GetNumberOfLeadingZeros(allValue), 0u);
+			static_assert(Memory::GetNumberOfLeadingZeros(allValue) == 0u);
 		}
 		{
 			const uint32 value = 0b00000100000000010000000000000000;
 			EXPECT_EQ(Memory::GetNumberOfLeadingZeros(value), 5u);
+			static_assert(Memory::GetNumberOfLeadingZeros(value) == 5u);
 			const uint32 zeroValue = 0b00000000000000000000000000000000;
 			EXPECT_EQ(Memory::GetNumberOfLeadingZeros(zeroValue), 32u);
+			static_assert(Memory::GetNumberOfLeadingZeros(zeroValue) == 32u);
 			const uint32 allValue = 0b11111111111111111111111111111111;
 			EXPECT_EQ(Memory::GetNumberOfLeadingZeros(allValue), 0u);
+			static_assert(Memory::GetNumberOfLeadingZeros(allValue) == 0u);
 		}
 		{
 			const uint16 value = 0b0000001000010000;
 			EXPECT_EQ(Memory::GetNumberOfLeadingZeros(value), 6u);
+			static_assert(Memory::GetNumberOfLeadingZeros(value) == 6u);
 			const uint16 zeroValue = 0b0000000000000000;
 			EXPECT_EQ(Memory::GetNumberOfLeadingZeros(zeroValue), 16u);
+			static_assert(Memory::GetNumberOfLeadingZeros(zeroValue) == 16u);
 			const uint16 allValue = 0b1111111111111111;
 			EXPECT_EQ(Memory::GetNumberOfLeadingZeros(allValue), 0u);
+			static_assert(Memory::GetNumberOfLeadingZeros(allValue) == 0u);
 		}
 		{
 			const uint8 value = 0b00000110;
 			EXPECT_EQ(Memory::GetNumberOfLeadingZeros(value), 5u);
+			static_assert(Memory::GetNumberOfLeadingZeros(value) == 5u);
 			const uint8 zeroValue = 0b00000000;
 			EXPECT_EQ(Memory::GetNumberOfLeadingZeros(zeroValue), 8u);
+			static_assert(Memory::GetNumberOfLeadingZeros(zeroValue) == 8u);
 			const uint8 allValue = 0b11111111;
 			EXPECT_EQ(Memory::GetNumberOfLeadingZeros(allValue), 0u);
+			static_assert(Memory::GetNumberOfLeadingZeros(allValue) == 0u);
 		}
 	}
 
@@ -286,34 +298,46 @@ namespace ngine::Tests
 		{
 			const uint64 value = 0b0001000000000100000000000000000000000000000000000000000000000000;
 			EXPECT_EQ(Memory::GetNumberOfTrailingZeros(value), 50u);
+			static_assert(Memory::GetNumberOfTrailingZeros(value) == 50u);
 			const uint64 zeroValue = 0b0000000000000000000000000000000000000000000000000000000000000000;
 			EXPECT_EQ(Memory::GetNumberOfTrailingZeros(zeroValue), 64u);
+			static_assert(Memory::GetNumberOfTrailingZeros(zeroValue) == 64u);
 			const uint64 allValue = 0b1111111111111111111111111111111111111111111111111111111111111111;
 			EXPECT_EQ(Memory::GetNumberOfTrailingZeros(allValue), 0u);
+			static_assert(Memory::GetNumberOfTrailingZeros(allValue) == 0u);
 		}
 		{
 			const uint32 value = 0b00000100000000010000000000000000;
 			EXPECT_EQ(Memory::GetNumberOfTrailingZeros(value), 16u);
+			static_assert(Memory::GetNumberOfTrailingZeros(value) == 16u);
 			const uint32 zeroValue = 0b00000000000000000000000000000000;
 			EXPECT_EQ(Memory::GetNumberOfTrailingZeros(zeroValue), 32u);
+			static_assert(Memory::GetNumberOfTrailingZeros(zeroValue) == 32u);
 			const uint32 allValue = 0b11111111111111111111111111111111;
 			EXPECT_EQ(Memory::GetNumberOfTrailingZeros(allValue), 0u);
+			static_assert(Memory::GetNumberOfTrailingZeros(allValue) == 0u);
 		}
 		{
 			const uint16 value = 0b0000001000010000;
 			EXPECT_EQ(Memory::GetNumberOfTrailingZeros(value), 4u);
+			static_assert(Memory::GetNumberOfTrailingZeros(value) == 4u);
 			const uint16 zeroValue = 0b0000000000000000;
 			EXPECT_EQ(Memory::GetNumberOfTrailingZeros(zeroValue), 16u);
+			static_assert(Memory::GetNumberOfTrailingZeros(zeroValue) == 16u);
 			const uint16 allValue = 0b1111111111111111;
 			EXPECT_EQ(Memory::GetNumberOfTrailingZeros(allValue), 0u);
+			static_assert(Memory::GetNumberOfTrailingZeros(allValue) == 0u);
 		}
 		{
 			const uint8 value = 0b00000110;
 			EXPECT_EQ(Memory::GetNumberOfTrailingZeros(value), 1u);
+			static_assert(Memory::GetNumberOfTrailingZeros(value) == 1u);
 			const uint8 zeroValue = 0b00000000;
 			EXPECT_EQ(Memory::GetNumberOfTrailingZeros(zeroValue), 8u);
+			static_assert(Memory::GetNumberOfTrailingZeros(zeroValue) == 8u);
 			const uint8 allValue = 0b11111111;
 			EXPECT_EQ(Memory::GetNumberOfTrailingZeros(allValue), 0u);
+			static_assert(Memory::GetNumberOfTrailingZeros(allValue) == 0u);
 		}
 	}
 
@@ -322,49 +346,95 @@ namespace ngine::Tests
 		{
 			const uint64 value = 0b0001000000000100000000000000000000000000000000000000000000000000;
 			EXPECT_EQ(Memory::GetNumberOfSetBits(value), 2u);
+			static_assert(Memory::GetNumberOfSetBits(value) == 2u);
 			const uint64 zeroValue = 0b0000000000000000000000000000000000000000000000000000000000000000;
 			EXPECT_EQ(Memory::GetNumberOfSetBits(zeroValue), 0u);
+			static_assert(Memory::GetNumberOfSetBits(zeroValue) == 0u);
 			const uint64 allValue = 0b1111111111111111111111111111111111111111111111111111111111111111;
 			EXPECT_EQ(Memory::GetNumberOfSetBits(allValue), 64u);
+			static_assert(Memory::GetNumberOfSetBits(allValue) == 64u);
 		}
 		{
 			const uint32 value = 0b00000100000000010000000000000000;
 			EXPECT_EQ(Memory::GetNumberOfSetBits(value), 2u);
+			static_assert(Memory::GetNumberOfSetBits(value) == 2u);
 			const uint32 zeroValue = 0b00000000000000000000000000000000;
 			EXPECT_EQ(Memory::GetNumberOfSetBits(zeroValue), 0u);
+			static_assert(Memory::GetNumberOfSetBits(zeroValue) == 0u);
 			const uint32 allValue = 0b11111111111111111111111111111111;
 			EXPECT_EQ(Memory::GetNumberOfSetBits(allValue), 32u);
+			static_assert(Memory::GetNumberOfSetBits(allValue) == 32u);
+		}
+	}
+
+	UNIT_TEST(Math, GetBitWidth)
+	{
+		{
+			const uint64 value = 0b0000000000000000000000000000000000000000000000000000000000000001;
+			EXPECT_EQ(Memory::GetBitWidth(value), 1u);
+			static_assert(Memory::GetBitWidth(value) == 1u);
+		}
+		{
+			const uint64 value = 0b0000000000000000000000000000000000000000000000000000000000000010;
+			EXPECT_EQ(Memory::GetBitWidth(value), 2u);
+			static_assert(Memory::GetBitWidth(value) == 2u);
+		}
+		{
+			const uint64 value = 0b1000000000000000000000000000000000000000000000000000000000000010;
+			EXPECT_EQ(Memory::GetBitWidth(value), 64u);
+			static_assert(Memory::GetBitWidth(value) == 64u);
 		}
 	}
 
 	UNIT_TEST(Math, GetFirstSetIndex)
 	{
 		EXPECT_FALSE(Memory::GetFirstSetIndex((uint64)0ull).IsValid());
+		static_assert(!Memory::GetFirstSetIndex((uint64)0ull).IsValid());
 		EXPECT_TRUE(Memory::GetFirstSetIndex(uint8(1u)).IsValid());
+		static_assert(Memory::GetFirstSetIndex(uint8(1u)).IsValid());
 		EXPECT_TRUE(Memory::GetFirstSetIndex(uint8(255)).IsValid());
+		static_assert(Memory::GetFirstSetIndex(uint8(255)).IsValid());
 		EXPECT_EQ(*Memory::GetFirstSetIndex(1u), 0u);
+		static_assert(*Memory::GetFirstSetIndex(1u) == 0u);
 		EXPECT_EQ(*Memory::GetFirstSetIndex(2u), 1u);
+		static_assert(*Memory::GetFirstSetIndex(2u) == 1u);
 		EXPECT_EQ(*Memory::GetFirstSetIndex(3u), 0u);
+		static_assert(*Memory::GetFirstSetIndex(3u) == 0u);
 		EXPECT_EQ(*Memory::GetFirstSetIndex((uint64)0b1000000000000000000000000000000000000000000000000000000000000000ull), 63ull);
+		static_assert(*Memory::GetFirstSetIndex((uint64)0b1000000000000000000000000000000000000000000000000000000000000000ull) == 63ull);
 		EXPECT_EQ(*Memory::GetFirstSetIndex((uint64)0b0000000000000000000000000000000000000000000000000000000000000001ull), 0ull);
+		static_assert(*Memory::GetFirstSetIndex((uint64)0b0000000000000000000000000000000000000000000000000000000000000001ull) == 0ull);
 		EXPECT_EQ(*Memory::GetFirstSetIndex((uint64)0b0001000000000100000000000000000000000000000000000000000000000000ull), 50ull);
+		static_assert(*Memory::GetFirstSetIndex((uint64)0b0001000000000100000000000000000000000000000000000000000000000000ull) == 50ull);
 		EXPECT_EQ(*Memory::GetFirstSetIndex((uint64)0b1111111111111111111111111111111111111111111111111111111111111111ull), 0ull);
+		static_assert(*Memory::GetFirstSetIndex((uint64)0b1111111111111111111111111111111111111111111111111111111111111111ull) == 0ull);
 		EXPECT_FALSE(Memory::GetFirstSetIndex((uint64)0b000000000000000000000000000000000000000000000000000000000000000ull).IsValid());
+		static_assert(!Memory::GetFirstSetIndex((uint64)0b000000000000000000000000000000000000000000000000000000000000000ull).IsValid());
 	}
 
 	UNIT_TEST(Math, GetLastSetIndex)
 	{
 		EXPECT_FALSE(Memory::GetLastSetIndex((uint64)0ull).IsValid());
+		static_assert(!Memory::GetLastSetIndex((uint64)0ull).IsValid());
 		EXPECT_TRUE(Memory::GetLastSetIndex(uint8(1u)).IsValid());
+		static_assert(Memory::GetLastSetIndex(uint8(1u)).IsValid());
 		EXPECT_TRUE(Memory::GetLastSetIndex(uint8(255)).IsValid());
 		EXPECT_EQ(*Memory::GetLastSetIndex(1u), 0u);
+		static_assert(*Memory::GetLastSetIndex(1u) == 0u);
 		EXPECT_EQ(*Memory::GetLastSetIndex(2u), 1u);
+		static_assert(*Memory::GetLastSetIndex(2u) == 1u);
 		EXPECT_EQ(*Memory::GetLastSetIndex(3u), 1u);
+		static_assert(*Memory::GetLastSetIndex(3u) == 1u);
 		EXPECT_EQ(*Memory::GetLastSetIndex((uint64)0b1000000000000000000000000000000000000000000000000000000000000000ull), 63ull);
+		static_assert(*Memory::GetLastSetIndex((uint64)0b1000000000000000000000000000000000000000000000000000000000000000ull) == 63ull);
 		EXPECT_EQ(*Memory::GetLastSetIndex((uint64)0b0000000000000000000000000000000000000000000000000000000000000001ull), 0ull);
+		static_assert(*Memory::GetLastSetIndex((uint64)0b0000000000000000000000000000000000000000000000000000000000000001ull) == 0ull);
 		EXPECT_EQ(*Memory::GetLastSetIndex((uint64)0b0001000000000100000000000000000000000000000000000000000000000000ull), 60ull);
+		static_assert(*Memory::GetLastSetIndex((uint64)0b0001000000000100000000000000000000000000000000000000000000000000ull) == 60ull);
 		EXPECT_EQ(*Memory::GetLastSetIndex((uint64)0b1111111111111111111111111111111111111111111111111111111111111111ull), 63ull);
+		static_assert(*Memory::GetLastSetIndex((uint64)0b1111111111111111111111111111111111111111111111111111111111111111ull) == 63ull);
 		EXPECT_FALSE(Memory::GetLastSetIndex((uint64)0b000000000000000000000000000000000000000000000000000000000000000ull).IsValid());
+		static_assert(!Memory::GetLastSetIndex((uint64)0b000000000000000000000000000000000000000000000000000000000000000ull).IsValid());
 	}
 
 	UNIT_TEST(Math, GetSetBitsIterator)
@@ -481,6 +551,16 @@ namespace ngine::Tests
 	UNIT_TEST(Math, ClearLeadingSetBits)
 	{
 		EXPECT_EQ(Memory::ClearLeadingSetBits((uint16)0b1011000100100100, 3u), 0b0000000100100100);
+	}
+
+	UNIT_TEST(Math, GetRemappedRange)
+	{
+		{
+			Math::Rangef sourceRange = Math::Rangef::Make(-32768.f, 65535.f);
+			Math::Rangef targetRange = Math::Rangef::Make(-1.f, 2.f);
+			EXPECT_NEAR(targetRange.GetRemappedValue(-32768.f, sourceRange), -1.f, 0.01f);
+			EXPECT_NEAR(targetRange.GetRemappedValue(32767.f, sourceRange), 1.f, 0.01f);
+		}
 	}
 
 	UNIT_TEST(Math, ReverseBits)

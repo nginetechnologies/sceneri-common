@@ -6,6 +6,7 @@
 #include <Common/Platform/NoDebug.h>
 #include <Common/Guid.h>
 #include <Common/TypeTraits/UnderlyingType.h>
+#include <Common/TypeTraits/HasBitwiseAssignments.h>
 #include <Common/Memory/CountBits.h>
 #include <Common/Serialization/ForwardDeclarations/Reader.h>
 #include <Common/Serialization/ForwardDeclarations/Writer.h>
@@ -112,7 +113,7 @@ namespace ngine
 		}
 		FORCE_INLINE NO_DEBUG constexpr void Clear(const EnumFlags flags)
 		{
-			m_flags = EnumType(GetUnderlyingValue() & ~flags.GetUnderlyingValue());
+			m_flags = EnumType(GetUnderlyingValue() & (UnderlyingType)~flags.GetUnderlyingValue());
 		}
 		FORCE_INLINE NO_DEBUG constexpr void Set(const EnumFlags flags)
 		{
@@ -120,7 +121,7 @@ namespace ngine
 		}
 		FORCE_INLINE NO_DEBUG constexpr void Set(const EnumFlags flags, const bool condition)
 		{
-			m_flags = EnumType((GetUnderlyingValue() & ~flags.GetUnderlyingValue()) | (flags * condition).GetUnderlyingValue());
+			m_flags = EnumType((GetUnderlyingValue() & (UnderlyingType)~flags.GetUnderlyingValue()) | (flags * condition).GetUnderlyingValue());
 		}
 		FORCE_INLINE NO_DEBUG constexpr void Toggle(const EnumFlags flags)
 		{
@@ -148,7 +149,14 @@ namespace ngine
 
 		FORCE_INLINE NO_DEBUG constexpr EnumFlags& operator|=(const EnumFlags other)
 		{
-			GetUnderlyingValue() |= other.GetUnderlyingValue();
+			if constexpr (TypeTraits::HasBitwiseOrEqual<EnumType>)
+			{
+				m_flags |= other.m_flags;
+			}
+			else
+			{
+				GetUnderlyingValue() |= other.GetUnderlyingValue();
+			}
 			return *this;
 		}
 
@@ -159,7 +167,15 @@ namespace ngine
 
 		FORCE_INLINE NO_DEBUG constexpr EnumFlags& operator&=(const EnumFlags other)
 		{
-			GetUnderlyingValue() &= static_cast<UnderlyingType>(other.GetUnderlyingValue());
+
+			if constexpr (TypeTraits::HasBitwiseAndEqual<EnumType>)
+			{
+				m_flags &= other.m_flags;
+			}
+			else
+			{
+				GetUnderlyingValue() &= static_cast<UnderlyingType>(other.GetUnderlyingValue());
+			}
 			return *this;
 		}
 
@@ -175,7 +191,15 @@ namespace ngine
 
 		FORCE_INLINE NO_DEBUG constexpr EnumFlags& operator^=(const EnumFlags other)
 		{
-			GetUnderlyingValue() ^= static_cast<UnderlyingType>(other.GetUnderlyingValue());
+
+			if constexpr (TypeTraits::HasBitwiseXorEqual<EnumType>)
+			{
+				m_flags ^= other.m_flags;
+			}
+			else
+			{
+				GetUnderlyingValue() ^= static_cast<UnderlyingType>(other.GetUnderlyingValue());
+			}
 			return *this;
 		}
 
@@ -190,7 +214,7 @@ namespace ngine
 
 		[[nodiscard]] FORCE_INLINE NO_DEBUG constexpr EnumFlags operator~() const
 		{
-			return EnumFlags(~GetUnderlyingValue());
+			return EnumFlags((UnderlyingType)~GetUnderlyingValue());
 		}
 
 		[[nodiscard]] FORCE_INLINE NO_DEBUG UnderlyingType& GetUnderlyingValue()
@@ -205,46 +229,46 @@ namespace ngine
 		struct Iterator : private UnderlyingSetBitsIterator::Iterator
 		{
 			using BaseType = typename UnderlyingSetBitsIterator::Iterator;
-			Iterator(const BaseType& iterator)
+			constexpr Iterator(const BaseType& iterator)
 				: BaseType(iterator)
 			{
 			}
 			using BaseType::BaseType;
 
-			[[nodiscard]] FORCE_INLINE NO_DEBUG bool operator==(const Iterator& other) const
+			[[nodiscard]] FORCE_INLINE NO_DEBUG constexpr bool operator==(const Iterator& other) const
 			{
 				return BaseType::operator==(other);
 			}
 
-			[[nodiscard]] FORCE_INLINE NO_DEBUG bool operator!=(const Iterator& other) const
+			[[nodiscard]] FORCE_INLINE NO_DEBUG constexpr bool operator!=(const Iterator& other) const
 			{
 				return BaseType::operator!=(other);
 			}
 			using BaseType::operator++;
 			using BaseType::IsSet;
 
-			[[nodiscard]] FORCE_INLINE NO_DEBUG EnumType operator*() const
+			[[nodiscard]] FORCE_INLINE NO_DEBUG constexpr EnumType operator*() const
 			{
 				return static_cast<EnumType>(1 << BaseType::operator*());
 			}
 		};
 
-		[[nodiscard]] FORCE_INLINE NO_DEBUG Iterator begin() const
+		[[nodiscard]] FORCE_INLINE NO_DEBUG constexpr Iterator begin() const
 		{
 			return Iterator(UnderlyingSetBitsIterator(GetUnderlyingValue()).begin());
 		}
-		[[nodiscard]] FORCE_INLINE NO_DEBUG Iterator end() const
+		[[nodiscard]] FORCE_INLINE NO_DEBUG constexpr Iterator end() const
 		{
 			return Iterator(UnderlyingSetBitsIterator(GetUnderlyingValue()).end());
 		}
 
-		[[nodiscard]] FORCE_INLINE NO_DEBUG Optional<EnumType> GetFirstSetFlag() const
+		[[nodiscard]] FORCE_INLINE NO_DEBUG constexpr Optional<EnumType> GetFirstSetFlag() const
 		{
 			const Memory::BitIndex<UnderlyingType> firstSetIndex = Memory::GetFirstSetIndex(GetUnderlyingValue());
 			return Optional<EnumType>{static_cast<EnumType>(1 << *firstSetIndex), firstSetIndex.IsValid()};
 		}
 
-		[[nodiscard]] FORCE_INLINE NO_DEBUG UnderlyingType GetNumberOfSetFlags() const
+		[[nodiscard]] FORCE_INLINE NO_DEBUG constexpr UnderlyingType GetNumberOfSetFlags() const
 		{
 			return Memory::GetNumberOfSetBits(GetUnderlyingValue());
 		}

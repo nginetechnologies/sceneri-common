@@ -88,6 +88,27 @@ namespace ngine
 
 			return result;
 		}
+
+		//! Generates a identifier from a string, based on an input base guid
+		//! This is not really a Guid in that it's not globally unique - but sufficient for script parsing and more
+		[[nodiscard]] static constexpr Guid FromString(const ConstStringView name, const Guid baseGuid)
+		{
+			Guid guid{baseGuid};
+			uint128 data{guid.GetData()};
+			for (uint8 index = 0; index < name.GetSize(); ++index)
+			{
+				// Calculate the position in m_data for XOR-ing, wrapped within the range of 16 bytes (128 bits)
+				const uint8 normalizedIndex = (index % 16) * 8;
+
+				// Extract the target byte, XOR it with the character, and put it back in m_data
+				uint8 currentByte = static_cast<uint8>((data >> normalizedIndex) & 0xFF);
+				currentByte ^= static_cast<uint8>(name[index]);
+				data &= ~(uint128(0xFF) << normalizedIndex);                    // Clear the target byte
+				data |= (static_cast<uint128>(currentByte) << normalizedIndex); // Set the new XOR-ed byte
+			}
+
+			return Guid{data};
+		}
 	public:
 		constexpr Guid()
 		{
