@@ -24,12 +24,12 @@ namespace ngine::Platform
 #if PLATFORM_APPLE_MACOS
 		NSPasteboard* pasteboard = [NSPasteboard generalPasteboard];
 		[pasteboard clearContents];
-		NSString* nsText = [[NSString alloc] initWithBytes:text.GetData() length:text.GetSize() * 2 encoding:NSUTF16LittleEndianStringEncoding];
+		NSString* nsText = [[NSString alloc] initWithBytes:text.GetData() length:text.GetDataSize() encoding:NSUTF16LittleEndianStringEncoding];
 		[pasteboard setString:nsText forType:NSPasteboardTypeString];
 		return true;
 #elif PLATFORM_APPLE_IOS
 		UIPasteboard* pasteboard = [UIPasteboard generalPasteboard];
-		NSString* nsText = [[NSString alloc] initWithBytes:text.GetData() length:text.GetSize() encoding:NSUTF16LittleEndianStringEncoding];
+		NSString* nsText = [[NSString alloc] initWithBytes:text.GetData() length:text.GetDataSize() encoding:NSUTF16LittleEndianStringEncoding];
 		pasteboard.string = nsText;
 		return true;
 #elif PLATFORM_EMSCRIPTEN
@@ -48,7 +48,7 @@ namespace ngine::Platform
 																						 // clang-format off
 				EM_ASM(
 					{
-						var url = UTF8ToString($0);
+						var url = UTF16ToString($0);
 						navigator.clipboard.writeText(url).catch(err => {
 							console.error('Failed to copy text to clipboard:', err);
 						});
@@ -129,36 +129,25 @@ namespace ngine::Platform
 				EM_ASM(
 					{
 						var callback = $0;
-						navigator.clipboard.readText()
-							.then(text => {
-								const utf16Array = new Uint16Array(text.length + 1);
-								for (let i = 0; i < text.length; i++) {
-									utf16Array[i] = text.charCodeAt(i);
-								}
-								utf16Array[text.length] = 0; // Null-terminate the string
+						navigator.clipboard.readText().then(text => {
+						  const utf16Array = new Uint16Array(text.length + 1);
+						  for (let i = 0; i < text.length; i++) {
+							utf16Array[i] = text.charCodeAt(i);
+						  }
+						  utf16Array[text.length] = 0;
+						  const length = text.length;
 
-								// Pass the UTF-16 data to C++
-								const length = text.length;
-								const ptr = Module._malloc(utf16Array.length * 2); // 2 bytes per UTF-16 character
-								Module.HEAPU16.set(utf16Array, ptr / 2);
-								Module["ccall"](
-									'OnPaste',
-									'void',
-									[ 'string', 'number', 'number'],
-									[ ptr, callback ]
-								);
-								Module._free(ptr);
-							})
-							.catch(err => {
-								console.error('Failed to read text from clipboard:', err);
-								Module["ccall"](
-									'OnPaste',
-									'void',
-									[ 'string', 'number', 'number' ],
-									[ 0, 0, callback ]
-								);
-							}
-						);
+						  const ptr = Module["_malloc"](utf16Array.length * 2);
+						  const data_on_heap = new Uint16Array(GROWABLE_HEAP_U16().buffer, ptr, utf16Array.length * 2);
+						  data_on_heap.set(utf16Array);
+
+						  Module["ccall"]("OnPaste", "void", [ "number", "number", "number" ], [ data_on_heap.byteOffset, utf16Array.length, callback ]);
+						  
+						  Module["_free"](ptr);
+						}).catch(err => {
+						  console.error("Failed to read text from clipboard:", err);
+						  Module["ccall"]("OnPaste", "void", [ "number", "number", "number" ], [ 0, 0, callback ]);
+						});
 					},
 					pCallback
 				);
