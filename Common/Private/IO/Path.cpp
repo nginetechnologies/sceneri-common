@@ -52,6 +52,7 @@
 #include <emscripten/wasmfs.h>
 #include <emscripten/proxying.h>
 #include <emscripten/threading.h>
+#include <emscripten.h>
 #endif
 
 #include <algorithm>
@@ -525,10 +526,27 @@ namespace ngine::IO
 #endif
 	}
 
+#if PLATFORM_EMSCRIPTEN
+// Workaround for asm being optimized out
+#pragma clang optimize off
+#endif
 	/* static */ void Path::InitializeDataDirectories()
 	{
 #if PLATFORM_EMSCRIPTEN
-		backend_t persistentBackend = wasmfs_create_opfs_backend();
+		const bool isWebKit = EM_ASM_INT({
+														// Don't let clang-format affect JavaScript
+			                      // clang-format off
+		const isWebKit = navigator.userAgent.includes('AppleWebKit') && !navigator.userAgent.includes('Chrome') && !navigator.userAgent.includes('Chromium');
+		if (isWebKit) {
+			 return 1;
+		 } else {
+			 return 0;
+		 }
+														// clang-format on
+													}) == 1;
+
+		// OPFS disabled for Safari for now as it causes deadlocks
+		backend_t persistentBackend = isWebKit ? wasmfs_create_memory_backend() : wasmfs_create_opfs_backend();
 		{
 			[[maybe_unused]] int result = wasmfs_create_directory(MAKE_PATH_LITERAL("/opfs"), 0777, persistentBackend);
 			Assert(result == 0);
@@ -541,6 +559,10 @@ namespace ngine::IO
 		wasmfs_flush();
 #endif
 	}
+#if PLATFORM_EMSCRIPTEN
+// Workaround for asm being optimized out
+#pragma clang optimize on
+#endif
 
 	/* static */ bool Path::ClearApplicationDataDirectory()
 	{
