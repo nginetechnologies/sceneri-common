@@ -35,9 +35,9 @@ function(AddTargetOptions target)
 
 	# Temporary while migrating preprocessor defines, TODO: make sure files include this
 	if(MSVC)
-		target_compile_options(${target} PRIVATE /FI${ENGINE_CODE_DIRECTORY}/Common/Public/Common/Common.h)
+		target_compile_options(${target} PRIVATE /FICommon/Common.h)
 	else()
-		target_compile_options(${target} PRIVATE -include ${ENGINE_CODE_DIRECTORY}/Common/Public/Common/Common.h)
+		target_compile_options(${target} PRIVATE -include Common/Common.h)
 	endif()
 
 	# Enable Asserts in all builds for now
