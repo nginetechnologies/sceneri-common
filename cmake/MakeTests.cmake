@@ -27,6 +27,8 @@ function(MakeUnitTests target target_name)
 			string(REPLACE "/" "\\" _group_path "${_source_path_rel}")
 			source_group("${_group_path}" FILES "${_source}")
 		endforeach()
+
+		AddCoreTargetOptions(gtest)
 	endif()
 endfunction()
 
@@ -56,5 +58,7 @@ function(MakeFeatureTests target target_name)
 			string(REPLACE "/" "\\" _group_path "${_source_path_rel}")
 			source_group("${_group_path}" FILES "${_source}")
 		endforeach()
+
+		AddCoreTargetOptions(gtest)
 	endif()
 endfunction()
