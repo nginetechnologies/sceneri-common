@@ -367,6 +367,10 @@ function(AddCoreTargetOptions target)
 		#target_link_options(${target} PRIVATE -sMEMORY64=1)
 		#target_compile_options(${target} PRIVATE -Wno-experimental)
 	endif()
+
+	if(PLATFORM_APPLE)
+		target_link_options(${target} PRIVATE "LINKER:-stack_size,${STACK_SIZE_HEX}")
+	endif()
 endfunction()
 
 function(AddTargetOptions target)
@@ -684,6 +688,5 @@ function(AddTargetOptions target)
 
 	if(PLATFORM_APPLE)
 		SetupAppleTarget(${target})
-		target_link_options(${target} PRIVATE "LINKER:-stack_size,${STACK_SIZE_HEX}")
 	endif()
 endfunction()
