@@ -8,7 +8,7 @@
 #   include <TargetConditionals.h>
 #   define PLATFORM_APPLE 1
 #   define PLATFORM_POSIX 1
-#   if TARGET_OS_MAC == 1
+#   if TARGET_OS_OSX == 1
 #       define PLATFORM_NAME "MacOS"
 #       define PLATFORM_DESKTOP 1
 #       define PLATFORM_APPLE_MACOS 1
