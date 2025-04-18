@@ -115,7 +115,10 @@
 				"macos-xcode-base"
 			],
 			"displayName": "macOS Xcode",
-			"description": "Compiles the full engine for MacOS with Xcode"
+			"description": "Compiles the full engine for MacOS with Xcode",
+			"cacheVariables": {
+				"CMAKE_SYSTEM_NAME": "Darwin"
+			}
 		},
 
 		{

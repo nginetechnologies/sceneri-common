@@ -12,7 +12,7 @@ extern "C"
 
 #pragma intrinsic(_InterlockedExchangeAdd16)
 #pragma intrinsic(_InterlockedExchangeAdd)
-#if defined(PLATFORM_64BIT)
+#if PLATFORM_64BIT
 #pragma intrinsic(_InterlockedExchangeAdd64)
 #endif // PLATFORM_64BIT
 

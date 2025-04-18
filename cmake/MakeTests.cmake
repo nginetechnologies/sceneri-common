@@ -3,8 +3,6 @@ include("${ENGINE_CMAKE_DIRECTORY}/LinkStaticLibrary.cmake")
 
 function(MakeUnitTests target target_name)
 	if(OPTION_BUILD_UNIT_TESTS)
-		project(${target_name}UnitTests CXX)
-
 		set(_${target_name}UnitTests_src_root_path "${CMAKE_CURRENT_LIST_DIR}/UnitTests")
 			file(
 				GLOB_RECURSE _${target_name}UnitTests_source_list
@@ -28,14 +26,12 @@ function(MakeUnitTests target target_name)
 			source_group("${_group_path}" FILES "${_source}")
 		endforeach()
 
-		AddTargetOptions(gtest)
+		AddCoreTargetOptions(gtest)
 	endif()
 endfunction()
 
 function(MakeFeatureTests target target_name)
 	if(OPTION_BUILD_FEATURE_TESTS)
-		project(${target_name}FeatureTests CXX)
-
 		set(_${target_name}FeatureTests_src_root_path "${CMAKE_CURRENT_LIST_DIR}/FeatureTests")
 			file(
 				GLOB_RECURSE _${target_name}FeatureTests_source_list
@@ -59,6 +55,6 @@ function(MakeFeatureTests target target_name)
 			source_group("${_group_path}" FILES "${_source}")
 		endforeach()
 
-		AddTargetOptions(gtest)
+		AddCoreTargetOptions(gtest)
 	endif()
 endfunction()

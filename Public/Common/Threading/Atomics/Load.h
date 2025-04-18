@@ -16,7 +16,7 @@ extern "C"
 #pragma intrinsic(__iso_volatile_load8)
 #pragma intrinsic(__iso_volatile_load16)
 #pragma intrinsic(__iso_volatile_load32)
-#if defined(PLATFORM_64BIT)
+#if PLATFORM_64BIT
 #pragma intrinsic(__iso_volatile_load64)
 #endif // PLATFORM_64BIT
 

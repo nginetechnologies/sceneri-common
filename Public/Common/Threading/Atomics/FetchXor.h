@@ -12,7 +12,7 @@ extern "C"
 #pragma intrinsic(_InterlockedXor8)
 #pragma intrinsic(_InterlockedXor16)
 #pragma intrinsic(_InterlockedXor)
-#if defined(PLATFORM_64BIT)
+#if PLATFORM_64BIT
 #pragma intrinsic(_InterlockedXor64)
 #endif // PLATFORM_64BIT
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(COMPILER_CLANG) || defined(COMPILER_GCC)
+#if COMPILER_CLANG || COMPILER_GCC
 #   if defined(__x86_64__) || defined(__i386__)
 #       define PLATFORM_X86 1
 #   elif defined(__arm__) || defined(__aarch64__)
@@ -20,7 +20,7 @@
 #   else
 #       error unhandled platform bit count
 #   endif
-#elif defined(COMPILER_MSVC)
+#elif COMPILER_MSVC
 #   if defined(_M_AMD64) || defined(_M_IX86)
 #       define PLATFORM_X86 1
 #   elif defined(_M_ARM) || defined(_M_ARM64)
@@ -57,4 +57,8 @@
 
 #ifndef PLATFORM_32BIT
 #   define PLATFORM_32BIT 0
+#endif
+
+#if PLATFORM_64BIT && !PLATFORM_X86
+#	define _AMD64_
 #endif

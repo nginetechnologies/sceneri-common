@@ -10,7 +10,7 @@ extern "C"
 
 #pragma intrinsic(_InterlockedIncrement)
 #pragma intrinsic(_InterlockedIncrement16)
-#if defined(PLATFORM_64BIT)
+#if PLATFORM_64BIT
 #pragma intrinsic(_InterlockedIncrement64)
 #endif // PLATFORM_64BIT
 
