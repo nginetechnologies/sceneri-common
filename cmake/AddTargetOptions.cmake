@@ -383,7 +383,7 @@ function(AddTargetOptions target)
 	if(MSVC)
 		target_compile_options(${target} PRIVATE /FICommon/Common.h)
 	else()
-		target_compile_options(${target} PRIVATE -include Common/Common.h)
+		target_compile_options(${target} PRIVATE $<$<OR:$<COMPILE_LANGUAGE:CXX>,$<COMPILE_LANGUAGE:OBJCXX>>:-include Common/Common.h>)
 	endif()
 
 	# Enable Asserts in all builds for now
