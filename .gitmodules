@@ -1,3 +1,3 @@
-[submodule "Common/Public/Common/3rdparty/googletest"]
-	path = Common/Public/Common/3rdparty/googletest
+[submodule "Public/Common/3rdparty/googletest"]
+	path = Public/Common/3rdparty/googletest
 	url = https://github.com/nginetechnologies/googletest.git

@@ -41,6 +41,13 @@ function(MakeExecutable target _platform directory)
 
 	AddTargetOptions(${target})
 
+	if (PLATFORM_LINUX)
+		set_target_properties(${target} PROPERTIES
+			BUILD_RPATH "\$ORIGIN"
+			INSTALL_RPATH "\$ORIGIN"
+		)
+	endif()
+
 	if(OPTION_PRECOMPILED_HEADERS)
 		if(EXISTS "${_${target}_pch_include}")
 			target_precompile_headers(${target} PUBLIC $<$<OR:$<COMPILE_LANGUAGE:CXX>,$<COMPILE_LANGUAGE:OBJCXX>>:"${_${target}_pch_include}">)

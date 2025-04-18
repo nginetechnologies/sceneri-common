@@ -7,6 +7,15 @@ function(MakeLauncher target target_directory)
 		MakeExecutable(${target} MACOSX_BUNDLE "${target_directory}")
 	elseif(PLATFORM_ANDROID)
 		MakeDynamicLibrary(${target} "${target_directory}" "${target}")
+
+		file(
+			GLOB_RECURSE _${target}_private_source_list_android
+			LIST_DIRECTORIES false
+			"${target_directory}/../Common/*.h"
+			"${target_directory}/../Common/*.cpp"
+			"${target_directory}/../Common/*.inl"
+		)
+		target_sources(${target} PRIVATE "${_${target}_private_source_list_android}")
 	else()
 		MakeExecutable(${target} "" "${target_directory}")
 	endif()
@@ -81,6 +90,8 @@ function(MakeLauncher target target_directory)
 
 			file(MAKE_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG_UPPER}}/.well-known")
 			file(COPY_FILE "${CMAKE_CURRENT_SOURCE_DIR}/Private/Web/apple-app-site-association" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG_UPPER}}/.well-known/apple-app-site-association" ONLY_IF_DIFFERENT)
+			file(COPY_FILE "${CMAKE_CURRENT_SOURCE_DIR}/Private/Web/assetlinks.json" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG_UPPER}}/.well-known/assetlinks.json" ONLY_IF_DIFFERENT)
+			file(COPY_FILE "${CMAKE_CURRENT_SOURCE_DIR}/Private/Web/appleid.auth.js" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG_UPPER}}/appleid.auth.js" ONLY_IF_DIFFERENT)
 		endforeach()
 	endif()
 endfunction()

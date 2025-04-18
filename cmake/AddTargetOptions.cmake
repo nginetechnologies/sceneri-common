@@ -13,6 +13,7 @@ function(AddTargetOptions target)
 	target_compile_definitions(${target} PRIVATE PLATFORM_32BIT=${PLATFORM_32BIT})
 	target_compile_definitions(${target} PRIVATE PLATFORM_DESKTOP=${PLATFORM_DESKTOP})
 	target_compile_definitions(${target} PRIVATE PLATFORM_MOBILE=${PLATFORM_MOBILE})
+	target_compile_definitions(${target} PRIVATE PLATFORM_SPATIAL=${PLATFORM_SPATIAL})
 	target_compile_definitions(${target} PRIVATE PLATFORM_WINDOWS=${PLATFORM_WINDOWS})
 	target_compile_definitions(${target} PRIVATE PLATFORM_X86=${PLATFORM_X86})
 	target_compile_definitions(${target} PRIVATE PLATFORM_POSIX=${PLATFORM_POSIX})
@@ -29,6 +30,7 @@ function(AddTargetOptions target)
 	target_compile_definitions(${target} PRIVATE PLATFORM_EMSCRIPTEN=${PLATFORM_EMSCRIPTEN})
 	target_compile_definitions(${target} PRIVATE PLATFORM_ARCHITECTURE=${PLATFORM_ARCHITECTURE})
 	target_compile_definitions(${target} PRIVATE CONTINUOUS_INTEGRATION=${CONTINUOUS_INTEGRATION})
+	target_compile_definitions(${target} PRIVATE TARGET_DISTRIBUTION="${OPTION_DISTRIBUTION}")
 
 	# Enable Asserts in all builds for now
 	target_compile_definitions(${target} PRIVATE ENABLE_ASSERTS=1)
@@ -57,6 +59,11 @@ function(AddTargetOptions target)
 		target_compile_definitions(${target} PRIVATE $<$<CONFIG:${OUTPUTCONFIG}>:CONFIGURATION_NAME="${OUTPUTCONFIG}">)
 		target_compile_definitions(${target} PRIVATE $<$<CONFIG:${OUTPUTCONFIG}>:CONFIGURATION_${OUTPUTCONFIG_UPPER}=1>)
 	endforeach()
+
+	string(REPLACE ";" "," TARGET_ENVIRONMENTS_DELIMITED "${TARGET_ENVIRONMENTS}")
+
+	target_compile_definitions(${target} PRIVATE TARGET_ENVIRONMENT="${TARGET_ENVIRONMENT}")
+	target_compile_definitions(${target} PRIVATE TARGET_ENVIRONMENTS="${TARGET_ENVIRONMENTS_DELIMITED}")
 
 	target_compile_definitions(${target} PRIVATE
 		$<$<CONFIG:Debug>:NDEBUG>
@@ -203,12 +210,39 @@ function(AddTargetOptions target)
 		# MACRO is defined to be '0': did you mean to use '#if MACRO'?
 		# Breaks in MSVC's own headers
 		target_compile_options(${target} PRIVATE /wd4574)
+		# command line argument number X does not match precompiled header
+		target_compile_options(${target} PRIVATE /wd4599)
 
 		if(USE_CCACHE)
 			# CCache doesn't support the ProgramDatabase format
 			target_compile_options(${target} PRIVATE /Z7)
 		else()
 			target_compile_options(${target} PRIVATE /Zi)
+		endif()
+
+		if (OPTION_CODE_HOT_RELOAD)
+			target_compile_options(${target} PRIVATE $<$<COMPILE_LANGUAGE:OBJCXX>:/hotpatch>)
+			# Enable function-level linking
+			target_compile_options(${target} PRIVATE /Gy)
+			# Optimize global data
+			target_compile_options(${target} PRIVATE /Gw)
+
+			if (COMPILER_CLANG_WINDOWS)
+				target_compile_options(${target} PRIVATE -Z7)
+				target_compile_options(${target} PRIVATE -hotpatch)
+				target_compile_options(${target} PRIVATE -Gy)
+				target_compile_options(${target} PRIVATE -Xclang -mno-constructor-aliases)
+				target_compile_options(${target} PRIVATE -gcodeview)
+				target_compile_options(${target} PRIVATE -fms-hotpatch)
+				target_compile_options(${target} PRIVATE -ffunction-sections)
+			endif()
+
+			target_link_options(${target} PRIVATE /FUNCTIONPADMIN)
+			target_link_options(${target} PRIVATE /OPT:NOREF)
+			target_link_options(${target} PRIVATE /OPT:NOICF)
+			target_link_options(${target} PRIVATE /DEBUG:FULL)
+		else()
+			target_link_options(${target} PRIVATE /DEBUG)
 		endif()
 
 		# Enable large object file support (largely for Unity builds)
@@ -253,7 +287,6 @@ function(AddTargetOptions target)
 
 		# Remove timestamps from executables to ensure determinisic .exe builds
 		target_link_options(${target} PRIVATE /Brepro)
-		target_link_options(${target} PRIVATE /DEBUG)
 
 		target_compile_definitions(${target} PRIVATE _ENABLE_EXTENDED_ALIGNED_STORAGE=1)
 
@@ -285,7 +318,7 @@ function(AddTargetOptions target)
 
 	elseif(COMPILER_CLANG)
 		# Enable debug symbols in all builds
-		target_compile_options(${target} PRIVATE -g -gsplit-dwarf)
+		target_compile_options(${target} PRIVATE -g)
 
 		target_compile_options(${target} PRIVATE $<$<OR:$<COMPILE_LANGUAGE:C>,$<COMPILE_LANGUAGE:CXX>,$<COMPILE_LANGUAGE:OBJCXX>>:
 			-Weverything 
@@ -358,7 +391,8 @@ function(AddTargetOptions target)
 			-Wno-unsafe-buffer-usage 
 			-Wno-switch-default 
 			-Wno-c++20-extensions
-			-Wno-unknown-warning-option>
+			-Wno-unknown-warning-option
+			-Wno-unique-object-duplication>
 		)
 		target_compile_definitions(${target} PRIVATE _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING=1 __clang__=1)
 
@@ -381,8 +415,8 @@ function(AddTargetOptions target)
 		endif()
 
 		if(PLATFORM_EMSCRIPTEN)
-			target_link_options(${target} PRIVATE -sEXPORTED_FUNCTIONS=['_main','_emscripten_proxy_get_system_queue','_emscripten_proxy_sync','_malloc','_free'])
-			target_link_options(${target} PRIVATE -sEXPORTED_RUNTIME_METHODS=['ccall','stringToNewUTF8'])
+			target_link_options(${target} PRIVATE -sEXPORTED_FUNCTIONS=['_main','_emscripten_proxy_get_system_queue','_emscripten_proxy_sync','_malloc','_free','_onGoogleSignIn','_onAppleSignIn'])
+			target_link_options(${target} PRIVATE -sEXPORTED_RUNTIME_METHODS=['ccall','stringToNewUTF8','UTF16ToString'])
 
 			target_compile_options(${target} PRIVATE
 				$<$<CONFIG:Debug>:-Og>
@@ -407,19 +441,23 @@ function(AddTargetOptions target)
 			target_compile_options(${target} PRIVATE 
 				$<$<CONFIG:Debug>:-gsource-map>
 				$<$<CONFIG:Profile>:-gsource-map>
+				$<$<CONFIG:RelWithDebInfo>:-gsource-map>
 			)
 			target_link_options(${target} PRIVATE
 				$<$<CONFIG:Debug>:-gsource-map>
 				$<$<CONFIG:Profile>:-gsource-map>
+				$<$<CONFIG:RelWithDebInfo>:-gsource-map>
 			)
 
 			target_compile_options(${target} PRIVATE 
 				$<$<CONFIG:Debug>:-g3 -gseparate-dwarf>
 				$<$<CONFIG:Profile>:-g3 -gseparate-dwarf>
+				$<$<CONFIG:RelWithDebInfo>:-g3 -gseparate-dwarf>
 			)
 			target_link_options(${target} PRIVATE 
 				$<$<CONFIG:Debug>:-g3>
 				$<$<CONFIG:Profile>:-g3>
+				$<$<CONFIG:RelWithDebInfo>:-g3>
 			)
 
 			target_link_options(${target} PRIVATE "-sSTACK_SIZE=${STACK_SIZE}")
@@ -500,7 +538,7 @@ function(AddTargetOptions target)
 		endif()
 	elseif(COMPILER_GCC)
 		# Enable debug symbols in all builds
-		target_compile_options(${target} PRIVATE -g -gsplit-dwarf)
+		target_compile_options(${target} PRIVATE -g)
 
 		target_compile_options(${target} PRIVATE $<$<OR:$<COMPILE_LANGUAGE:CXX>,$<COMPILE_LANGUAGE:OBJCXX>>:
 			-Wall 
@@ -533,8 +571,7 @@ function(AddTargetOptions target)
 		target_compile_options(${target} PRIVATE
 			$<$<CONFIG:Debug>:-O0>
 			$<$<CONFIG:Profile>:-O1>
-			$<$<CONFIG:>:-O1>
-			$<$<AND:$<CONFIG:RelWithDebInfo>,$<COMPILE_LANGUAGE:CXX>>:-Ofast -funroll-loops -fomit-frame-pointer>
+			$<$<AND:$<CONFIG:RelWithDebInfo>,$<COMPILE_LANGUAGE:CXX>>:-O3 -funroll-loops -fomit-frame-pointer>
 		)
 
 		if(NOT OPTION_EXCEPTIONS)
@@ -603,11 +640,11 @@ function(AddTargetOptions target)
 		target_link_options(${target} PRIVATE -sWASMFS=1)
 		target_link_options(${target} PRIVATE -sMALLOC=none)
 		target_link_options(${target} PRIVATE -sPROXY_POSIX_SOCKETS=1)
-		target_link_options(${target} PRIVATE $<$<CONFIG:Debug>:-sSAFE_HEAP=2>)
+		target_link_options(${target} PRIVATE $<$<CONFIG:Debug>:-sSAFE_HEAP=0>)
 		target_link_options(${target} PRIVATE $<$<CONFIG:Debug>:-sSTACK_OVERFLOW_CHECK=2>)
-		target_link_options(${target} PRIVATE $<$<CONFIG:Profile>:-sSAFE_HEAP=2>)
+		target_link_options(${target} PRIVATE $<$<CONFIG:Profile>:-sSAFE_HEAP=0>)
 		target_link_options(${target} PRIVATE $<$<CONFIG:Profile>:-sSTACK_OVERFLOW_CHECK=2>)
-		target_link_options(${target} PRIVATE $<$<CONFIG:RelWithDebInfo>:-sSAFE_HEAP=2>)
+		target_link_options(${target} PRIVATE $<$<CONFIG:RelWithDebInfo>:-sSAFE_HEAP=0>)
 		target_link_options(${target} PRIVATE $<$<CONFIG:RelWithDebInfo>:-sSTACK_OVERFLOW_CHECK=2>)
 
 		# Disable use of the TextDecoder in multithreaded contexts

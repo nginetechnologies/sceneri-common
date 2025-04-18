@@ -33,7 +33,7 @@ jobs:
       with:
         repository: nginetechnologies/googletest
         ref: v1.10.x
-        path: Common/Public/Common/3rdparty/googletest
+        path: Public/Common/3rdparty/googletest
     - name: configure
       run: |
         mkdir IntermediateWindows
@@ -69,7 +69,7 @@ jobs:
       with:
         repository: nginetechnologies/googletest
         ref: v1.10.x
-        path: Common/Public/Common/3rdparty/googletest
+        path: Public/Common/3rdparty/googletest
     - name: Configure
       run: |
         docker run --rm --user $(id -u):$(id -g) -v ${{ github.workspace }}:/workspace -v ~:/home -e HOME=/home -w /workspace \
@@ -117,7 +117,7 @@ jobs:
       with:
         repository: nginetechnologies/googletest
         ref: v1.10.x
-        path: Common/Public/Common/3rdparty/googletest
+        path: Public/Common/3rdparty/googletest
     - name: configure
       run: |
         mkdir IntermediateMacOS
