@@ -319,7 +319,6 @@ function(AddCoreTargetOptions target)
 		target_link_options(${target} PRIVATE -sPTHREAD_POOL_SIZE_STRICT=0)
 		target_link_options(${target} PRIVATE -sPTHREAD_POOL_DELAY_LOAD=1)
 		target_link_options(${target} PRIVATE -sPROXY_TO_PTHREAD=1)
-		target_compile_definitions(${target} PRIVATE SUPPORT_PTHREADS=1)
 		target_link_options(${target} PRIVATE -sWASM_WORKERS=2)
 
 		target_link_options(${target} PRIVATE -sINITIAL_MEMORY=600Mb)
@@ -681,11 +680,7 @@ function(AddTargetOptions target)
 			-Wno-unknown-warning-option
 		>)
 	endif()
-
-	if (PLATFORM_POSIX AND NOT PLATFORM_EMSCRIPTEN)
-		target_compile_definitions(${target} PRIVATE SUPPORT_PTHREADS=1)
-	endif()
-
+	
 	if(PLATFORM_APPLE)
 		SetupAppleTarget(${target})
 	endif()
