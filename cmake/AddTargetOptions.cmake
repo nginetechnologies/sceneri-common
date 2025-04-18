@@ -410,10 +410,6 @@ function(AddTargetOptions target)
 	# Enable Asserts in all builds for now
 	target_compile_definitions(${target} PRIVATE ENABLE_ASSERTS=1)
 
-	if (PLATFORM_64BIT AND PLATFORM_X86)
-		target_compile_definitions(${target} PRIVATE _AMD64_)
-	endif()
-
  	if (PLATFORM_APPLE)
 		target_compile_options(${target} PRIVATE $<$<OR:$<COMPILE_LANGUAGE:CXX>,$<COMPILE_LANGUAGE:OBJCXX>>:-xobjective-c++>)
   	endif()
