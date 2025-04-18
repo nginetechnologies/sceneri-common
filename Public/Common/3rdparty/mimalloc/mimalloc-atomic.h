@@ -371,7 +371,7 @@ static inline void mi_atomic_yield(void)
 {
 	YieldProcessor();
 }
-#elif defined(__SSE2__)
+#elif defined(__SSE2__) && !defined(COMPILER_MSVC)
 #include <emmintrin.h>
 static inline void mi_atomic_yield(void)
 {
