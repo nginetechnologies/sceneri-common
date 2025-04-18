@@ -442,7 +442,6 @@ function(AddTargetOptions target)
 
 	target_compile_definitions(${target} PRIVATE PLUGINS_IN_EXECUTABLE=1)
 
-	target_compile_definitions(${target} PRIVATE USE_SSE_OLD=${USE_SSE})
 	target_compile_definitions(${target} PRIVATE USE_SVML=${USE_SVML})
 
 	if (COMPILER_MSVC)
@@ -465,16 +464,6 @@ function(AddTargetOptions target)
 			target_compile_definitions(${target} PRIVATE __SSE4_2__)
 		endif()
 	endif()
-	target_compile_definitions(${target} PRIVATE USE_SSE2_OLD=${USE_SSE2})
-	target_compile_definitions(${target} PRIVATE USE_SSE3_OLD=${USE_SSE3})
-	target_compile_definitions(${target} PRIVATE USE_SSSE3_OLD=${USE_SSSE3})
-	target_compile_definitions(${target} PRIVATE USE_SSE4_1_OLD=${USE_SSE4_1})
-	target_compile_definitions(${target} PRIVATE USE_SSE4_2_OLD=${USE_SSE4_2})
-	target_compile_definitions(${target} PRIVATE USE_AVX_OLD=${USE_AVX})
-	target_compile_definitions(${target} PRIVATE USE_AVX2_OLD=${USE_AVX2})
-	target_compile_definitions(${target} PRIVATE USE_AVX512_OLD=${USE_AVX512})
-	target_compile_definitions(${target} PRIVATE USE_NEON_OLD=${USE_NEON})
-	target_compile_definitions(${target} PRIVATE USE_WASM_SIMD128_OLD=${USE_WASM_SIMD128})
 
 	target_compile_definitions(${target} PRIVATE USE_SDL=${USE_SDL})
 
