@@ -4,7 +4,7 @@
 #include <Common/Math/NumericLimits.h>
 #include <Common/Platform/Pure.h>
 
-#if PLATFORM_POSIX && defined(_POSIX_THREADS)
+#if PLATFORM_POSIX && SUPPORT_PTHREADS
 #define USE_PTHREAD 1
 #include <pthread.h>
 #include <unistd.h>
