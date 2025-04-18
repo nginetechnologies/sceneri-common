@@ -17,7 +17,7 @@ extern "C"
 #pragma intrinsic(_InterlockedCompareExchange)
 #pragma intrinsic(_InterlockedCompareExchange8)
 #pragma intrinsic(_InterlockedCompareExchange16)
-#if defined(PLATFORM_64BIT)
+#if PLATFORM_64BIT
 #pragma intrinsic(_InterlockedCompareExchange64)
 #pragma intrinsic(_InterlockedCompareExchange128)
 #endif // PLATFORM_64BIT

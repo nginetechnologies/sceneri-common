@@ -2,7 +2,7 @@
 
 #if defined(__clang__)
 #   define COMPILER_CLANG 1
-#   if defined(PLATFORM_WINDOWS)
+#   if PLATFORM_WINDOWS
 #       define COMPILER_CLANG_WINDOWS 1
 #   endif
 #elif defined(__GNUC__)
