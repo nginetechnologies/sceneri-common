@@ -62,10 +62,3 @@
 #if PLATFORM_64BIT && !PLATFORM_X86
 #	define _AMD64_
 #endif
-
-// Temporary while porting
-static_assert(PLATFORM_X86 == PLATFORM_X86_OLD);
-static_assert(PLATFORM_ARM == PLATFORM_ARM_OLD);
-static_assert(PLATFORM_WEB == PLATFORM_WEB_OLD);
-static_assert(PLATFORM_64BIT == PLATFORM_64BIT_OLD);
-static_assert(PLATFORM_32BIT == PLATFORM_32BIT_OLD);

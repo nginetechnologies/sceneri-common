@@ -28,9 +28,3 @@
 #ifndef COMPILER_MSVC
 #   define COMPILER_MSVC 0
 #endif
-
-// Temporary while porting
-static_assert(COMPILER_MSVC == COMPILER_MSVC_OLD);
-static_assert(COMPILER_GCC == COMPILER_GCC_OLD);
-static_assert(COMPILER_CLANG == COMPILER_CLANG_OLD);
-static_assert(COMPILER_CLANG_WINDOWS == COMPILER_CLANG_WINDOWS_OLD);
