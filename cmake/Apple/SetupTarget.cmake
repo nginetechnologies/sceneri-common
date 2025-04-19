@@ -1,5 +1,15 @@
 if (PLATFORM_APPLE)
 	set(OPTION_XCODE_DEVELOPMENT_TEAM "" CACHE STRING "The development team to use for Xcode code signing")
+	configure_file(
+		${CMAKE_CURRENT_LIST_DIR}/ExportOptions_Upload.plist.in
+		${CMAKE_CURRENT_LIST_DIR}/ExportOptions_Upload.plist
+		@ONLY
+	)
+	configure_file(
+		${CMAKE_CURRENT_LIST_DIR}/ExportOptions.plist.in
+		${CMAKE_CURRENT_LIST_DIR}/ExportOptions.plist
+		@ONLY
+	)
 endif()
 
 function(SetupAppleTarget target)
