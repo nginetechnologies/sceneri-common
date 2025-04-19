@@ -54,7 +54,7 @@
 #	define USE_AVX512 0
 #endif
 
-#ifdef __ARM_NEON__
+#if defined(__ARM_NEON__) || (PLATFORM_ARM && PLATFORM_64BIT)
 #	define USE_NEON 1
 #else
 #	define USE_NEON 0
