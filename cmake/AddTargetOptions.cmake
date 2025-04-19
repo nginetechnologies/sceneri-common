@@ -161,23 +161,19 @@ function(AddCoreTargetOptions target)
 			target_compile_options(${target} PRIVATE 
 				$<$<CONFIG:Debug>:-gsource-map>
 				$<$<CONFIG:Profile>:-gsource-map>
-				$<$<CONFIG:RelWithDebInfo>:-gsource-map>
 			)
 			target_link_options(${target} PRIVATE
 				$<$<CONFIG:Debug>:-gsource-map>
 				$<$<CONFIG:Profile>:-gsource-map>
-				$<$<CONFIG:RelWithDebInfo>:-gsource-map>
 			)
 
 			target_compile_options(${target} PRIVATE 
 				$<$<CONFIG:Debug>:-g3 -gseparate-dwarf>
 				$<$<CONFIG:Profile>:-g3 -gseparate-dwarf>
-				$<$<CONFIG:RelWithDebInfo>:-g3 -gseparate-dwarf>
 			)
 			target_link_options(${target} PRIVATE 
 				$<$<CONFIG:Debug>:-g3>
 				$<$<CONFIG:Profile>:-g3>
-				$<$<CONFIG:RelWithDebInfo>:-g3>
 			)
 
 			target_link_options(${target} PRIVATE "-sSTACK_SIZE=${STACK_SIZE}")
