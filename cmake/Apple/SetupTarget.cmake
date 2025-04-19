@@ -1,5 +1,7 @@
 if (PLATFORM_APPLE)
-	set(OPTION_XCODE_DEVELOPMENT_TEAM "" CACHE STRING "The development team to use for Xcode code signing")
+	if (NOT DEFINED OPTION_XCODE_DEVELOPMENT_TEAM)
+		set(OPTION_XCODE_DEVELOPMENT_TEAM "" CACHE STRING "The development team to use for Xcode code signing")
+	endif()
 	configure_file(
 		${CMAKE_CURRENT_LIST_DIR}/ExportOptions_Upload.plist.in
 		${CMAKE_CURRENT_LIST_DIR}/ExportOptions_Upload.plist
