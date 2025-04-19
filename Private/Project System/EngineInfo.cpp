@@ -86,6 +86,7 @@ namespace ngine
 		serializer.Serialize("source_directory", m_relativeSourceDirectory);
 		serializer.Serialize("binary_directory", m_relativeBinaryDirectory);
 		serializer.Serialize("library_directory", m_relativeLibraryDirectory);
+		serializer.Serialize("core_directory", m_relativeCoreDirectory);
 
 		return true;
 	}
@@ -98,6 +99,7 @@ namespace ngine
 		serializer.Serialize("source_directory", m_relativeSourceDirectory);
 		serializer.Serialize("binary_directory", m_relativeBinaryDirectory);
 		serializer.Serialize("library_directory", m_relativeLibraryDirectory);
+		serializer.Serialize("core_directory", m_relativeCoreDirectory);
 
 		return true;
 	}

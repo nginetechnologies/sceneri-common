@@ -71,10 +71,20 @@ namespace ngine
 		{
 			return m_relativeLibraryDirectory;
 		}
+		//! Gets the relative path to the engine's core directory
+		[[nodiscard]] const IO::PathView GetRelativeCoreDirectory() const
+		{
+			return m_relativeCoreDirectory;
+		}
 
 		[[nodiscard]] IO::Path GetSourceDirectory() const
 		{
 			return IO::Path::Combine(GetDirectory(), GetRelativeSourceDirectory());
+		}
+		//! Gets the absolute path to the engine's core directory
+		[[nodiscard]] IO::Path GetCoreDirectory() const
+		{
+			return IO::Path::Combine(GetDirectory(), GetRelativeCoreDirectory());
 		}
 
 		[[nodiscard]] IO::Path GetProjectLauncherPath() const;
@@ -91,5 +101,6 @@ namespace ngine
 		IO::Path m_relativeSourceDirectory;
 		IO::Path m_relativeBinaryDirectory;
 		IO::Path m_relativeLibraryDirectory;
+		IO::Path m_relativeCoreDirectory;
 	};
 }
