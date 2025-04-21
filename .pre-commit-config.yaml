@@ -1,0 +1,50 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+exclude: '(?:^|\/)3rdparty(?:\/|$)'
+repos:
+-   repo: https://github.com/nginetechnologies/pre-commit-hooks
+    rev: v1.0.0
+    hooks: 
+    -   id: check-clang-pragma
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+    -   id: check-yaml
+    -   id: check-added-large-files
+-   repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: 'v17.0.6'  # Use the sha / tag you want to point at
+    hooks:
+    -   id: clang-format
+        'types_or': [c++, c, json, objective-c]
+-   repo: https://github.com/Takishima/cmake-pre-commit-hooks
+    rev: v1.9.5
+    hooks:
+    - id: clang-tidy
+      'types_or': [c++, c, objective-c]
+      'exclude_types': [header]
+      'stages': [manual]
+      args: [ 
+        -Bcmake-build-pre-commit, 
+        -S.,
+        --no-automatic-discovery,
+        --win="--preset=windows-msvc-x64-ninja",
+        --mac="--preset=macos-xcode",
+        --linux="--preset=linux-clang-ninja",
+        -DENABLE_PRECOMPILED_HEADERS=OFF,
+        -DOPTION_UNITY_BUILD=OFF,
+        -DOPTION_CCACHE=OFF ]
+    - id: include-what-you-use
+      'types_or': [c++, c, objective-c]
+      'exclude_types': [header]
+      'stages': [manual]
+      args: [ 
+        -Bcmake-build-pre-commit, 
+        -S.,
+        --no-automatic-discovery,
+        --win="--preset=windows-msvc-x64-ninja",
+        --mac="--preset=macos-xcode",
+        --linux="--preset=linux-clang-ninja",
+        -DENABLE_PRECOMPILED_HEADERS=OFF,
+        -DOPTION_UNITY_BUILD=OFF,
+        -DOPTION_CCACHE=OFF,
+    ]
