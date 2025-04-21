@@ -348,7 +348,7 @@ protected:
 		}
 		else
 		{
-            end = ngine::Math::Internal::Serialize(buffer, 25 - 1, (std::int64_t)d);
+            end = ngine::Math::Internal::Serialize(buffer, 25 - 1, (ngine::int64)d);
 		}
 
         PutReserve(*os_, static_cast<size_t>(end - buffer));
@@ -552,7 +552,7 @@ inline bool Writer<StringBuffer>::WriteDouble(double d) {
 	}
 	else
 	{
-        end = ngine::Math::Internal::Serialize(buffer, 25 - 1, (std::int64_t)d);
+        end = ngine::Math::Internal::Serialize(buffer, 25 - 1, (ngine::int64)d);
 	}
     os_->Pop(static_cast<size_t>(25 - (end - buffer)));
     return true;
