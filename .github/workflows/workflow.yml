@@ -72,26 +72,22 @@ jobs:
         path: Public/Common/3rdparty/googletest
     - name: Configure
       run: |
-        docker run --rm --user $(id -u):$(id -g) -v ${{ github.workspace }}:/workspace -v ~:/home -e HOME=/home -w /workspace \
+        docker run --rm --user $(id -u):$(id -g) -v ${{ github.workspace }}:${{ github.workspace }} -v ~:/home -e HOME=/home -w ${{ github.workspace }} \
           registry.gitlab.steamos.cloud/steamrt/sniper/sdk \
           bash -c "
-            cmake -S . -B /workspace/bld --preset=linux-clang-ninja -DOPTION_BUILD_UNIT_TESTS=ON -DOPTION_BUILD_FEATURE_TESTS=ON -DOPTION_UNITY_BUILD=ON -DOPTION_CCACHE=ON -DOPTION_PRECOMPILED_HEADERS=OFF
+            cmake -S . -B bld --preset=linux-clang-ninja -DOPTION_BUILD_UNIT_TESTS=ON -DOPTION_BUILD_FEATURE_TESTS=ON -DOPTION_UNITY_BUILD=ON -DOPTION_CCACHE=ON -DOPTION_PRECOMPILED_HEADERS=OFF
         "
     - name: Build in Steam Runtime
       run: |
-        docker run --rm --user $(id -u):$(id -g) -v ${{ github.workspace }}:/workspace -v ~:/home -e HOME=/home -w /workspace \
+        docker run --rm --user $(id -u):$(id -g) -v ${{ github.workspace }}:${{ github.workspace }} -v ~:/home -e HOME=/home -w ${{ github.workspace }} \
           registry.gitlab.steamos.cloud/steamrt/sniper/sdk \
           bash -c "
-          cmake --build /workspace/bld --config Profile --parallel
+          cmake --build bld --config Profile --parallel
         "
     - name: run tests
       run: |
-        docker run --rm --user $(id -u):$(id -g) -v ${{ github.workspace }}:/workspace -v ~:/home -e HOME=/home -w /workspace \
-          registry.gitlab.steamos.cloud/steamrt/sniper/sdk \
-          bash -c "
-          cd bld
-          ctest -C Profile
-        "
+        cd bld
+        ctest -C Profile
 
   build-macos:
     name: "MacOS Debug"
