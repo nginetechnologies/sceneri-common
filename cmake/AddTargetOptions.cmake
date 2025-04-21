@@ -135,7 +135,18 @@ function(AddCoreTargetOptions target)
 		endif()
 
 		if(PLATFORM_EMSCRIPTEN)
-			target_link_options(${target} PRIVATE -sEXPORTED_FUNCTIONS=['_main','_emscripten_proxy_get_system_queue','_emscripten_proxy_sync','_malloc','_free','_onGoogleSignIn','_onAppleSignIn'])
+			list(APPEND EXPORTED_FUNCTIONS
+				'_main'
+				'_emscripten_proxy_get_system_queue'
+				'_emscripten_proxy_sync'
+				'_malloc'
+				'_free'
+			)
+
+			string(REPLACE ";" "','" EXPORTED_FUNCTIONS_STRING "${EXPORTED_FUNCTIONS}")
+			set(EXPORTED_FUNCTIONS_STRING "'${EXPORTED_FUNCTIONS_STRING}'")
+			
+			target_link_options(${target} PRIVATE -sEXPORTED_FUNCTIONS=[${EXPORTED_FUNCTIONS_STRING}])
 			target_link_options(${target} PRIVATE -sEXPORTED_RUNTIME_METHODS=['ccall','stringToNewUTF8','UTF16ToString'])
 
 			target_compile_options(${target} PRIVATE
