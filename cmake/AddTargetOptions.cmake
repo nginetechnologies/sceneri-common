@@ -136,11 +136,11 @@ function(AddCoreTargetOptions target)
 
 		if(PLATFORM_EMSCRIPTEN)
 			list(APPEND EXPORTED_FUNCTIONS
-				'_main'
-				'_emscripten_proxy_get_system_queue'
-				'_emscripten_proxy_sync'
-				'_malloc'
-				'_free'
+				_main
+				_emscripten_proxy_get_system_queue
+				_emscripten_proxy_sync
+				_malloc
+				_free
 			)
 
 			string(REPLACE ";" "','" EXPORTED_FUNCTIONS_STRING "${EXPORTED_FUNCTIONS}")
