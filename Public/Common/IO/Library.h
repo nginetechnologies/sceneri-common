@@ -17,16 +17,17 @@ namespace ngine::IO
 		inline static constexpr PathView FileNamePrefix = MAKE_PATH("");
 		inline static constexpr PathView FileNamePostfix = MAKE_PATH(".dll");
 		inline static constexpr PathView ExecutablePostfix = MAKE_PATH(".exe");
-#else
-		inline static constexpr PathView ExecutablePostfix = MAKE_PATH("");
-
-#if PLATFORM_APPLE
-		inline static constexpr PathView FileNamePostfix = MAKE_PATH(".bundle");
+		inline static constexpr PathView ApplicationPostfix = ExecutablePostfix;
+#elif PLATFORM_APPLE
 		inline static constexpr PathView FileNamePrefix = MAKE_PATH("");
+		inline static constexpr PathView FileNamePostfix = MAKE_PATH(".bundle");
+		inline static constexpr PathView ExecutablePostfix = MAKE_PATH("");
+		inline static constexpr PathView ApplicationPostfix = MAKE_PATH(".app");
 #else
-		inline static constexpr PathView FileNamePostfix = MAKE_PATH(".so");
 		inline static constexpr PathView FileNamePrefix = MAKE_PATH("lib");
-#endif
+		inline static constexpr PathView FileNamePostfix = MAKE_PATH(".so");
+		inline static constexpr PathView ExecutablePostfix = MAKE_PATH("");
+		inline static constexpr PathView ApplicationPostfix = MAKE_PATH("");
 #endif
 
 		LibraryView() = default;

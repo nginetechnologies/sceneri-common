@@ -32,6 +32,11 @@ namespace ngine
 			GetRelativeBinaryDirectory(),
 			MAKE_PATH(PLATFORM_NAME),
 			MAKE_PATH(CONFIGURATION_NAME),
+#if PLATFORM_APPLE_MACOS
+			IO::Path::Merge(MAKE_PATH("ProjectLauncher"), IO::Library::ApplicationPostfix),
+			MAKE_PATH("Contents"),
+			MAKE_PATH(PLATFORM_NAME),
+#endif
 			IO::Path::Merge(MAKE_PATH("ProjectLauncher"), IO::Library::ExecutablePostfix)
 		);
 	}
@@ -53,6 +58,11 @@ namespace ngine
 			GetRelativeBinaryDirectory(),
 			MAKE_PATH(PLATFORM_NAME),
 			MAKE_PATH(CONFIGURATION_NAME),
+#if PLATFORM_APPLE_MACOS
+			IO::Path::Merge(MAKE_PATH("Editor"), IO::Library::ApplicationPostfix),
+			MAKE_PATH("Contents"),
+			MAKE_PATH(PLATFORM_NAME),
+#endif
 			IO::Path::Merge(MAKE_PATH("Editor"), IO::Library::ExecutablePostfix)
 		);
 	}
@@ -75,10 +85,11 @@ namespace ngine
 			GetRelativeBinaryDirectory(),
 			MAKE_PATH(PLATFORM_NAME),
 #if PLATFORM_APPLE_MACOS
-			MAKE_PATH("AssetCompiler.app/Contents/MacOS/AssetCompiler")
-#else
-			IO::Path::Merge(MAKE_PATH("AssetCompiler"), IO::Library::ExecutablePostfix)
+			IO::Path::Merge(MAKE_PATH("AssetCompiler"), IO::Library::ApplicationPostfix),
+			MAKE_PATH("Contents"),
+			MAKE_PATH(PLATFORM_NAME),
 #endif
+			IO::Path::Merge(MAKE_PATH("AssetCompiler"), IO::Library::ExecutablePostfix)
 		);
 	}
 
