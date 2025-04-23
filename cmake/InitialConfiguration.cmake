@@ -472,7 +472,7 @@ set(MAXIMUM_COMPILATION_PROCESS_COUNT ${SYSTEM_LOGICAL_CORE_COUNT})
 set(CMAKE_BUILD_PARALLEL_LEVEL ${MAXIMUM_COMPILATION_PROCESS_COUNT} CACHE INTERNAL "")
 
 if(COMPILER_CLANG)
-	file(WRITE "${CMAKE_BINARY_DIR}/.lldbinit" "command script import ${ENGINE_CODE_DIRECTORY}/Public/Common/CommonLLDBFormatters.py")
+	file(WRITE "${CMAKE_BINARY_DIR}/.lldbinit" "command script import ${COMMON_ROOT_DIRECTORY}/Public/Common/CommonLLDBFormatters.py")
 endif()
 
 if(COMPILER_MSVC)
